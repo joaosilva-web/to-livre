@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
+import Header from "./components/Header";
 
 const geistPoppins = Poppins({
   variable: "--font-geist-poppins",
@@ -28,6 +29,7 @@ export default function RootLayout({
       <body
         className={`${geistPoppins.variable} ${geistInter.variable} antialiased`}
       >
+        <Header />
         {children}
       </body>
     </html>
