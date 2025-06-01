@@ -1,6 +1,7 @@
 import ForWhom from "./components/ForWhom";
 import Hero from "./components/Hero";
 import HowItWorks from "./components/HowItWorks";
+import Pricing from "./components/Pricing";
 import Testimonials from "./components/Testimonials";
 
 export default function Home() {
@@ -10,6 +11,7 @@ export default function Home() {
       <HowItWorks />
       <ForWhom />
       <Testimonials />
+      <Pricing />
     </div>
   );
 }
