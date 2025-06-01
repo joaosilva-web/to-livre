@@ -1,3 +1,4 @@
+import ForWhom from "./components/ForWhom";
 import Hero from "./components/Hero";
 import HowItWorks from "./components/HowItWorks";
 
@@ -6,6 +7,7 @@ export default function Home() {
     <div className="min-h-screen bg-background-muted p-6 text-text">
       <Hero />
       <HowItWorks />
+      <ForWhom />
     </div>
   );
 }
