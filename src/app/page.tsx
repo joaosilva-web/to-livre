@@ -1,3 +1,4 @@
+import FAQ from "./components/Faq";
 import ForWhom from "./components/ForWhom";
 import Hero from "./components/Hero";
 import HowItWorks from "./components/HowItWorks";
@@ -12,6 +13,7 @@ export default function Home() {
       <ForWhom />
       <Testimonials />
       <Pricing />
+      <FAQ />
     </div>
   );
 }
