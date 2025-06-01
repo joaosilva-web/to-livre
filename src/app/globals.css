@@ -6,10 +6,37 @@
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Cores principais */
+  --color-primary: #1ac897;
+  --color-primary-hover: #17b384;
+  --color-primary-light: #b1f0dc;
+
+  /* Texto */
+  --color-text: #1a1a1a;
+  --color-text-secondary: #555555;
+  --color-text-inverse: #ffffff;
+
+  /* Fundo */
+  --color-background: #ffffff;
+  --color-background-muted: #f9f9f9;
+  --color-background-dark: #121212;
+
+  /* Bordas */
+  --color-border: #e0e0e0;
+  --color-border-focus: #1ac897;
+
+  /* Feedback */
+  --color-feedback-error: #e53935;
+  --color-feedback-success: #43a047;
+  --color-feedback-warning: #fdd835;
+  --color-feedback-info: #0288d1;
+
+  /* Secundário */
+  --color-secondary: #f0f0f0;
+  --color-secondary-hover: #e6fffa;
+
+  /* Fontes */
+  --font-sans: Arial, Helvetica, sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -22,5 +49,12 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Inter", sans-serif;
+}
+
+h1,
+h2,
+h3,
+.titulo {
+  font-family: "Poppins", sans-serif;
 }
