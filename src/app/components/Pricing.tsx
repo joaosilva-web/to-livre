@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 export default function Pricing() {
@@ -97,12 +98,12 @@ export default function Pricing() {
           </table>
         </div>
 
-        <a
-          href="#start"
+        <Link
+          href="/leads"
           className="inline-block mt-12 bg-primary text-white px-6 py-3 rounded-xl text-lg hover:bg-primary-hover transition"
         >
           Quero começar de graça
-        </a>
+        </Link>
       </div>
     </section>
   );

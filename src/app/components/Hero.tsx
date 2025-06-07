@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Hero() {
   return (
@@ -18,20 +19,20 @@ export default function Hero() {
 
           <div className="flex flex-col sm:flex-row gap-6 justify-center md:justify-start">
             <div className="flex flex-col sm:flex-row sm:items-center gap-4 mt-2">
-              <a
-                href="#start"
+              <Link
+                href="/leads"
                 className="bg-primary text-white px-6 py-3 rounded-xl text-lg font-semibold hover:bg-primary-hover hover:scale-105 transition"
               >
                 Comece grátis
-              </a>
+              </Link>
             </div>
             <div className="flex flex-col sm:flex-row sm:items-center gap-4 mt-2">
-              <a
-                href="#start"
+              <Link
+                href="/leads"
                 className="bg-bg text-primary border px-6 py-3 rounded-xl text-lg font-semibold hover:bg-bg hover:scale-105 transition"
               >
                 Veja como funciona
-              </a>
+              </Link>
             </div>
           </div>
         </div>

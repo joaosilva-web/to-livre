@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
+import LayoutWrapper from "./components/LayoutWrapper";
 
 const geistPoppins = Poppins({
   variable: "--font-geist-poppins",
@@ -30,9 +29,7 @@ export default function RootLayout({
       <body
         className={`${geistPoppins.variable} ${geistInter.variable} antialiased`}
       >
-        <Header />
-        {children}
-        <Footer />
+        <LayoutWrapper>{children}</LayoutWrapper>
       </body>
     </html>
   );

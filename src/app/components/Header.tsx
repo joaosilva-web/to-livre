@@ -1,9 +1,11 @@
 "use client"; // se estiver usando App Router (Next 13+)
 
 import { useState } from "react";
-import Image from "next/image";
+// import Image from "next/image";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
+import IconLogo from "./ui/IconLogo";
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
@@ -19,15 +21,10 @@ export default function Header() {
     <header className="w-full bg-white shadow fixed top-0 z-50">
       <div className="flex items-center justify-between px-6 py-4">
         {/* Logo */}
-        <div className="flex items-center gap-2">
-          <Image
-            src="/main-logo.svg"
-            alt="Logo de um calendário verde com uma asa lateral"
-            width={36}
-            height={36}
-          />
+        <Link href="/" className="flex items-center gap-2">
+          <IconLogo />
           <h1 className="text-3xl font-bold text-primary">TôLivre</h1>
-        </div>
+        </Link>
 
         {/* Menu Desktop */}
         <nav className="hidden md:flex items-center gap-6 text-text">
@@ -40,12 +37,12 @@ export default function Header() {
               {label}
             </a>
           ))}
-          <a
-            href="#start"
+          <Link
+            href="/leads"
             className="bg-primary text-white px-4 py-2 rounded-xl hover:bg-primary-hover hover:scale-105 transition duration-300"
           >
             Comece grátis
-          </a>
+          </Link>
         </nav>
 
         {/* Botão Mobile */}
@@ -86,13 +83,13 @@ export default function Header() {
                 {label}
               </a>
             ))}
-            <a
-              href="#start"
+            <Link
+              href="/leads"
               onClick={() => setIsOpen(false)}
               className="bg-primary text-white px-4 py-2 rounded-xl text-center hover:bg-primary-hover transition"
             >
               Comece grátis
-            </a>
+            </Link>
           </motion.nav>
         )}
       </AnimatePresence>

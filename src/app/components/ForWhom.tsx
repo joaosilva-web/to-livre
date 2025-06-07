@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function ForWhom() {
   return (
     <section id="who" className="py-24 bg-gray-50 px-6">
@@ -31,12 +33,12 @@ export default function ForWhom() {
         </p>
 
         <div className="mt-8">
-          <a
-            href="#start"
+          <Link
+            href="/leads"
             className="bg-primary text-white px-6 py-3 rounded-xl text-lg font-semibold hover:bg-primary-hover hover:scale-105 transition"
           >
             Comece a usar gratuitamente
-          </a>
+          </Link>
         </div>
       </div>
     </section>
