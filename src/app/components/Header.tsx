@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import IconLogo from "./ui/IconLogo";
+import FullLogo from "./ui/FullLogo";
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
@@ -21,10 +21,7 @@ export default function Header() {
     <header className="w-full bg-white shadow fixed top-0 z-50">
       <div className="flex items-center justify-between px-6 py-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <IconLogo />
-          <h1 className="text-3xl font-bold text-primary">TôLivre</h1>
-        </Link>
+        <FullLogo />
 
         {/* Menu Desktop */}
         <nav className="hidden md:flex items-center gap-6 text-text">
