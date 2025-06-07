@@ -1,5 +1,5 @@
 import { CalendarCheck, BellRing, CreditCard } from "lucide-react";
-import Link from "next/link";
+import Button from "./ui/Button";
 
 export default function HowItWorks() {
   return (
@@ -46,12 +46,9 @@ export default function HowItWorks() {
 
         {/* CTA Final */}
         <div className="mt-16">
-          <Link
-            href="/leads"
-            className="bg-primary text-white px-6 py-3 rounded-xl text-lg font-semibold hover:bg-primary-hover hover:scale-105 transition"
-          >
+          <Button asLink href="/leads" mt="sm">
             Quero experimentar de graça
-          </Link>
+          </Button>
         </div>
       </div>
     </section>

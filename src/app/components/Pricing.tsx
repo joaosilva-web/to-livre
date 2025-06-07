@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
+import Button from "./ui/Button";
 
 export default function Pricing() {
   const [isAnnual, setIsAnnual] = useState(false);
@@ -24,22 +24,20 @@ export default function Pricing() {
 
         {/* Toggle */}
         <div className="flex items-center justify-center gap-4 mb-8">
-          <button
+          <Button
+            variant={!isAnnual ? "primary" : "secondary"}
+            size="sm"
             onClick={() => setIsAnnual(false)}
-            className={`px-4 py-2 rounded-full ${
-              !isAnnual ? "bg-primary text-white" : "text-gray-700"
-            }`}
           >
             Mensal
-          </button>
-          <button
+          </Button>
+          <Button
+            variant={isAnnual ? "primary" : "secondary"}
+            size="sm"
             onClick={() => setIsAnnual(true)}
-            className={`px-4 py-2 rounded-full ${
-              isAnnual ? "bg-primary text-white" : "text-gray-700"
-            }`}
           >
             Anual
-          </button>
+          </Button>
         </div>
 
         {/* Tabela */}
@@ -97,13 +95,9 @@ export default function Pricing() {
             </tbody>
           </table>
         </div>
-
-        <Link
-          href="/leads"
-          className="inline-block mt-12 bg-primary text-white px-6 py-3 rounded-xl text-lg hover:bg-primary-hover transition"
-        >
+        <Button asLink href="/leads" mt="xlg">
           Quero começar de graça
-        </Link>
+        </Button>
       </div>
     </section>
   );

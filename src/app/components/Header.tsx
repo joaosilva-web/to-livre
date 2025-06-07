@@ -6,6 +6,7 @@ import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import FullLogo from "./ui/FullLogo";
+import Button from "./ui/Button";
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
@@ -44,12 +45,9 @@ export default function Header() {
                 {label}
               </a>
             ))}
-            <Link
-              href="/leads"
-              className="bg-primary text-white px-4 py-2 rounded-xl hover:bg-primary-hover hover:scale-105 transition duration-300"
-            >
+            <Button asLink href="/leads" size="sm">
               Comece grátis
-            </Link>
+            </Button>
           </nav>
 
           {/* Botão Mobile */}
