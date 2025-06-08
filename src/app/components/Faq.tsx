@@ -1,6 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { bounceIn, bounceOut } from "@/animations/motionVariants";
+import { useScrollMotion } from "@/hooks/useScrollMotion";
+import FAQItem from "./ui/FAQItem";
+import { motion } from "framer-motion";
 
 const faqs = [
   {
@@ -26,39 +29,22 @@ const faqs = [
 ];
 
 export default function FAQ() {
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
-
-  const toggle = (index: number) => {
-    setOpenIndex(openIndex === index ? null : index);
-  };
+  const heading = useScrollMotion();
 
   return (
     <section id="faq" className="py-24 px-6 bg-gray-50">
       <div className="max-w-3xl mx-auto">
-        <h2 className="text-4xl md:text-5xl font-bold text-center text-primary mb-12">
+        <motion.h2
+          ref={heading.ref}
+          {...(heading.isVisible ? bounceIn : bounceOut)}
+          className="text-4xl md:text-5xl font-bold text-center text-primary mb-12"
+        >
           Dúvidas frequentes
-        </h2>
+        </motion.h2>
 
         <div className="space-y-4">
           {faqs.map((faq, index) => (
-            <div
-              key={index}
-              className="border border-gray-200 rounded-xl overflow-hidden shadow-sm bg-white"
-            >
-              <button
-                onClick={() => toggle(index)}
-                className="w-full text-left px-6 py-4 flex justify-between items-center text-text font-medium hover:bg-gray-100 transition"
-              >
-                {faq.question}
-                <span className="text-xl">
-                  {openIndex === index ? "−" : "+"}
-                </span>
-              </button>
-
-              {openIndex === index && (
-                <div className="px-6 pb-4 text-gray-600">{faq.answer}</div>
-              )}
-            </div>
+            <FAQItem key={index} question={faq.question} answer={faq.answer} />
           ))}
         </div>
       </div>

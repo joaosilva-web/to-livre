@@ -3,6 +3,9 @@
 import { useKeenSlider } from "keen-slider/react";
 import "keen-slider/keen-slider.min.css";
 import { useState } from "react";
+import { useScrollMotion } from "@/hooks/useScrollMotion";
+import { motion } from "framer-motion";
+import { bounceIn, bounceOut } from "@/animations/motionVariants";
 
 export default function Testimonials() {
   const testimonials = [
@@ -19,6 +22,9 @@ export default function Testimonials() {
       author: "João, barbeiro",
     },
   ];
+
+  const heading = useScrollMotion();
+  const div = useScrollMotion();
 
   const [currentSlide, setCurrentSlide] = useState(0);
 
@@ -42,21 +48,27 @@ export default function Testimonials() {
   return (
     <section id="testimonials" className="py-24 px-6">
       <div className="max-w-6xl mx-auto text-center">
-        <h2 className="text-4xl md:text-5xl font-bold text-primary mb-16">
+        <motion.h2
+          ref={heading.ref}
+          {...(heading.isVisible ? bounceIn : bounceOut)}
+          className="text-4xl md:text-5xl font-bold text-primary mb-16"
+        >
           Quem usa, recomenda
-        </h2>
+        </motion.h2>
 
-        <div ref={sliderRef} className="keen-slider mb-8 p-2">
-          {testimonials.map((item, i) => (
-            <div
-              key={i}
-              className="keen-slider__slide p-6 rounded-xl shadow hover:shadow-md text-left"
-            >
-              <p className="text-lg text-text italic mb-4">{item.text}</p>
-              <p className="font-semibold text-primary">— {item.author}</p>
-            </div>
-          ))}
-        </div>
+        <motion.div ref={div.ref} {...(div.isVisible ? bounceIn : bounceOut)}>
+          <div ref={sliderRef} className="keen-slider mb-8 p-2">
+            {testimonials.map((item, i) => (
+              <div
+                key={i}
+                className="keen-slider__slide p-6 rounded-xl shadow hover:shadow-md text-left"
+              >
+                <p className="text-lg text-text italic mb-4">{item.text}</p>
+                <p className="font-semibold text-primary">— {item.author}</p>
+              </div>
+            ))}
+          </div>
+        </motion.div>
 
         {/* Bullets */}
         <div className="flex justify-center gap-2">

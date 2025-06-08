@@ -2,8 +2,16 @@
 
 import { useState } from "react";
 import Button from "./ui/Button";
+import { useScrollMotion } from "@/hooks/useScrollMotion";
+import { motion } from "framer-motion";
+import { bounceIn, bounceOut } from "@/animations/motionVariants";
 
 export default function Pricing() {
+  const heading = useScrollMotion();
+  const paragraph = useScrollMotion();
+  const cta = useScrollMotion();
+  const ctaFim = useScrollMotion();
+  const table = useScrollMotion(0.2);
   const [isAnnual, setIsAnnual] = useState(false);
 
   const prices = {
@@ -14,16 +22,28 @@ export default function Pricing() {
   return (
     <section id="pricing" className="py-24 px-6">
       <div className="max-w-6xl mx-auto text-center">
-        <h2 className="text-4xl md:text-5xl font-bold text-primary mb-4">
+        <motion.h2
+          ref={heading.ref}
+          {...(heading.isVisible ? bounceIn : bounceOut)}
+          className="text-4xl md:text-5xl font-bold text-primary mb-4"
+        >
           Comece grátis. Sem cartão. Só quando você crescer.
-        </h2>
+        </motion.h2>
 
-        <p className="text-text text-lg mb-8 max-w-xl mx-auto">
+        <motion.p
+          ref={paragraph.ref}
+          {...(paragraph.isVisible ? bounceIn : bounceOut)}
+          className="text-text text-lg mb-8 max-w-xl mx-auto"
+        >
           Planos pensados para acompanhar o seu crescimento.
-        </p>
+        </motion.p>
 
         {/* Toggle */}
-        <div className="flex items-center justify-center gap-4 mb-8">
+        <motion.div
+          ref={cta.ref}
+          {...(cta.isVisible ? bounceIn : bounceOut)}
+          className="flex items-center justify-center gap-4 mb-8"
+        >
           <Button
             variant={!isAnnual ? "primary" : "secondary"}
             size="sm"
@@ -38,10 +58,14 @@ export default function Pricing() {
           >
             Anual
           </Button>
-        </div>
+        </motion.div>
 
         {/* Tabela */}
-        <div className="overflow-x-auto">
+        <motion.div
+          ref={table.ref}
+          {...(table.isVisible ? bounceIn : bounceOut)}
+          className="overflow-x-auto"
+        >
           <table className="w-full border-collapse text-left rounded-xl overflow-hidden shadow-sm">
             <thead>
               <tr className="bg-gray-100 text-text">
@@ -94,10 +118,15 @@ export default function Pricing() {
               ))}
             </tbody>
           </table>
-        </div>
-        <Button asLink href="/leads" mt="xlg">
-          Quero começar de graça
-        </Button>
+        </motion.div>
+        <motion.div
+          ref={ctaFim.ref}
+          {...(ctaFim.isVisible ? bounceIn : bounceOut)}
+        >
+          <Button asLink href="/leads" mt="xlg">
+            Quero começar de graça
+          </Button>
+        </motion.div>
       </div>
     </section>
   );

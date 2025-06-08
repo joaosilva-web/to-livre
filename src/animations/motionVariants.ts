@@ -13,10 +13,24 @@ export const slideUp: Variants = {
 };
 
 export const bounceIn: Variants = {
-  initial: { scale: 0.8, opacity: 0 },
+  initial: { scale: 0.5, opacity: 0 },
   animate: {
     scale: 1,
     opacity: 1,
+    transition: {
+      type: "spring",
+      stiffness: 300,
+      damping: 20,
+    },
+  },
+  exit: { scale: 0.8, opacity: 0 },
+};
+
+export const bounceOut: Variants = {
+  initial: { scale: 1, opacity: 0 },
+  animate: {
+    scale: 0.5,
+    opacity: 0,
     transition: {
       type: "spring",
       stiffness: 300,
