@@ -8,6 +8,9 @@ import { ArrowLeft } from "lucide-react";
 import ReCAPTCHA from "react-google-recaptcha";
 import { useRef } from "react";
 import { useReward } from "react-rewards";
+import { motion } from "framer-motion";
+import { useScrollMotion } from "@/hooks/useScrollMotion";
+import { bounceIn, bounceOut } from "@/animations/motionVariants";
 
 const SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!;
 
@@ -22,11 +25,12 @@ const leadSchema = z.object({
 type LeadFormData = z.infer<typeof leadSchema>;
 
 export default function LeadsPage() {
+  const card = useScrollMotion();
   const [responseIsOk, setResponseIsOk] = useState<boolean>();
   const [errorMessage, setErrorMessage] = useState<string>();
 
   const recaptchaRef = useRef<ReCAPTCHA>(null);
-  const { reward, isAnimating } = useReward("confetti", "confetti", {
+  const { reward } = useReward("confetti", "confetti", {
     spread: 90,
     elementCount: 100,
   });
@@ -75,7 +79,11 @@ export default function LeadsPage() {
   return (
     <section className="pt-[74] min-h-screen flex items-center justify-center bg-gray-50">
       <ReCAPTCHA sitekey={SITE_KEY} size="invisible" ref={recaptchaRef} />
-      <div className="relative max-w-md w-full bg-white rounded-2xl shadow p-8 flex justify-center items-center">
+      <motion.div
+        ref={card.ref}
+        {...(card.isVisible ? bounceIn : bounceOut)}
+        className="relative max-w-md w-full bg-white rounded-2xl shadow p-8 flex justify-center items-center"
+      >
         <span id="confetti" />
         {responseIsOk ? (
           <div className="text-center text-primary text-xl font-semibold">
@@ -166,7 +174,7 @@ export default function LeadsPage() {
             </button>
           </form>
         )}
-      </div>
+      </motion.div>
     </section>
   );
 }
