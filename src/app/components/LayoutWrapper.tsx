@@ -10,7 +10,7 @@ export default function LayoutWrapper({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const hideFooter = pathname === "/leads";
+  const hideFooter = pathname !== "/leads";
 
   return (
     <>
