@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
+import Input from "../components/ui/Input";
 
 const registerSchema = z.object({
   name: z.string().min(2, { message: "Nome é obrigatório" }),
@@ -60,74 +61,67 @@ export default function CadastroPage() {
   }
 
   return (
-    <section className="min-h-screen flex items-center justify-center bg-gray-50">
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="bg-white p-8 rounded-2xl shadow max-w-md w-full space-y-6"
-      >
-        <h1 className="text-2xl font-bold text-center text-primary">
-          Crie sua conta
+    <section
+      className="min-h-screen w-full flex items-center justify-center bg-gray-50 bg-cover bg-center px-8"
+      style={{ backgroundImage: "url('/calendar.png')" }}
+    >
+      <div className="w-[50%] h-screen flex flex-col justify-center items-center max-w-full">
+        <h1 className="text-6xl text-center font-bold">
+          Organize, automatize e viva com mais leveza.
         </h1>
+        <p className="text-white text-center text-xl font-medium max-w-lg">
+          Agendamentos automáticos, lembretes inteligentes e cobranças sem
+          complicação.
+        </p>
+      </div>
+      <div className="w-[50%] flex justify-end items-center">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="bg-white p-8 rounded-2xl shadow max-w-md w-full space-y-6"
+        >
+          <h1 className="text-2xl font-bold text-center text-primary">
+            Crie sua conta
+          </h1>
 
-        {errorMessage && (
-          <p className="text-red-500 text-sm text-center">{errorMessage}</p>
-        )}
+          {errorMessage && (
+            <p className="text-red-500 text-sm text-center">{errorMessage}</p>
+          )}
 
-        <div>
-          <label className="block mb-1 text-text-secondary font-medium">
-            Nome
-          </label>
-          <input
+          <Input
             type="text"
             {...register("name")}
-            className="w-full border border-gray-300 rounded-md px-4 py-2"
+            label="Nome"
             placeholder="Seu nome"
+            error={errors.name}
           />
-          {errors.name && (
-            <p className="text-red-500 text-sm">{errors.name.message}</p>
-          )}
-        </div>
 
-        <div>
-          <label className="block mb-1 text-text-secondary font-medium">
-            E-mail
-          </label>
-          <input
+          <Input
             type="email"
             {...register("email")}
-            className="w-full border border-gray-300 rounded-md px-4 py-2"
+            label="E-mail"
             placeholder="Seu melhor e-mail"
+            error={errors.email}
           />
-          {errors.email && (
-            <p className="text-red-500 text-sm">{errors.email.message}</p>
-          )}
-        </div>
 
-        <div>
-          <label className="block mb-1 text-text-secondary font-medium">
-            Senha
-          </label>
-          <input
+          <Input
             type="password"
             {...register("password")}
-            className="w-full border border-gray-300 rounded-md px-4 py-2"
+            label="Senha"
             placeholder="Crie uma senha"
+            error={errors.password}
           />
-          {errors.password && (
-            <p className="text-red-500 text-sm">{errors.password.message}</p>
-          )}
-        </div>
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className={`w-full bg-primary text-white py-2 rounded-lg hover:bg-primary-hover transition ${
-            isSubmitting && "opacity-70 cursor-not-allowed"
-          }`}
-        >
-          {isSubmitting ? "Cadastrando..." : "Cadastrar"}
-        </button>
-      </form>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className={`w-full bg-primary text-white py-2 rounded-lg hover:bg-primary-hover transition ${
+              isSubmitting && "opacity-70 cursor-not-allowed"
+            }`}
+          >
+            {isSubmitting ? "Cadastrando..." : "Cadastrar"}
+          </button>
+        </form>
+      </div>
     </section>
   );
 }

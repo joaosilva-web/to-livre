@@ -11,10 +11,11 @@ export default function LayoutWrapper({
 }) {
   const pathname = usePathname();
   const hideFooter = pathname !== "/leads";
+  const hideHeader = pathname == "/register";
 
   return (
     <>
-      <Header />
+      {!hideHeader && <Header />}
       {children}
       {!hideFooter && <Footer />}
     </>
