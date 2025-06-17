@@ -1,36 +1,155 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🗓️ TôLivre — Agendamentos sem complicação
 
-## Getting Started
+**TôLivre** é uma plataforma SaaS (Software as a Service) feita para profissionais autônomos que querem ter controle total dos seus agendamentos, lembretes e cobranças, sem depender de atendentes, WhatsApp ou processos manuais.
 
-First, run the development server:
+A proposta é simples: **automatizar tarefas rotineiras e libertar tempo para que o profissional foque no que realmente importa — atender bem seus clientes.**
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## 🚀 Funcionalidades
+
+- 📅 **Agendamento online**  
+  Seus clientes podem visualizar sua disponibilidade e agendar serviços de forma prática, a qualquer momento.
+
+- 🔔 **Lembretes automáticos**  
+  Notificações por e-mail, WhatsApp ou SMS para reduzir faltas e esquecimentos.
+
+- 💰 **Cobrança automatizada**  
+  Gere links de pagamento, envie cobranças recorrentes e tenha integração com plataformas como Pix, cartão e boleto.
+
+- 🗓️ **Gestão de agenda inteligente**  
+  Bloqueios de horários, reagendamentos e controle total da sua disponibilidade.
+
+- 📊 **Dashboard de métricas**  
+  Acompanhe seus atendimentos, faturamento e performance com gráficos e relatórios.
+
+- 👥 **Multiusuário (em breve)**  
+  Perfeito para pequenos negócios com mais de um profissional.
+
+---
+
+## 🏗️ Arquitetura e Tecnologias
+
+O TôLivre é construído com uma stack moderna, escalável e preparada para SaaS de alta performance.
+
+### ⚙️ Frontend
+
+- **Next.js 14 (App Router + Server Actions)**
+- **React**
+- **Tailwind CSS**
+- **Framer Motion** (animações fluidas)
+- **ShadCN UI** (componentização moderna)
+- **Zod + React Hook Form** (validação robusta de formulários)
+
+### 🧠 Backend
+
+- **API Route + Server Actions do Next.js**
+- **Prisma ORM**
+- **Banco de Dados PostgreSQL**
+- **Redis** (para cache e filas futuras)
+- **Auth personalizada ou NextAuth (em definição)**
+- **Rate Limiting, reCAPTCHA e Double Opt-in** (segurança e proteção contra spam)
+
+### ☁️ Infraestrutura
+
+- **Docker + Docker Compose** (para ambientes consistentes)
+- **Hospedagem:** Vercel (Frontend e API) + Neon (Banco/Postgres)
+- **Armazenamento de arquivos:** (em definição)
+
+### 🔒 Segurança
+
+- Proteções contra brute-force e spam
+- Confirmação de e-mail (double opt-in)
+- Hash de senhas (bcrypt ou argon2)
+- Autorização baseada em roles (admin, profissional, cliente)
+
+---
+
+## 🗂️ Organização do projeto
+
+```
+/app              → Rotas e páginas (Next.js App Router)
+/components       → Componentes reutilizáveis (UI)
+/hooks            → Hooks customizados
+/libs             → Configurações externas (prisma, auth, recaptcha...)
+/services         → Serviços e integrações externas (ex: envio de e-mails, pagamento)
+/controllers      → Regras de negócio (server side)
+/validators       → Schemas Zod e validações
+/public           → Arquivos públicos (imagens, favicon, etc.)
+/prisma           → Esquema do banco de dados (schema.prisma)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🏗️ Como rodar o projeto localmente
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Pré-requisitos:
 
-## Learn More
+- Node.js 18+
+- Docker instalado
+- Yarn ou npm
 
-To learn more about Next.js, take a look at the following resources:
+### Passos:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+# Clone o repositório
+git clone https://github.com/seu-usuario/tolivre.git
+cd tolivre
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Instale as dependências
+yarn install
 
-## Deploy on Vercel
+# Crie o arquivo .env
+cp .env.example .env
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Suba o banco de dados
+docker-compose up -d
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# Rode as migrations
+npx prisma migrate dev
+
+# Rode o projeto
+yarn dev
+```
+
+---
+
+## 🌎 Variáveis de ambiente
+
+Exemplo de `.env`:
+
+```
+POSTGRES_URL="postgresql://postgres@localhost:5432/tolivre-dev"
+POSTGRES_URL_NON_POOLING="postgresql://postgres@localhost:5432/tolivre-dev"
+
+RECAPTCHA_SECRET_KEY=
+NEXT_PUBLIC_RECAPTCHA_SITE_KEY=
+```
+
+---
+
+## 🚧 Status do projeto
+
+- ✅ Landing page
+- 🏗️ Em desenvolvimento:
+  - MVP funcional: Cadastro, login, agendamento e dashboard básico
+  - Integração com meios de pagamento (Pix, cartão, boleto)
+  - Área do cliente (para que clientes possam reagendar ou cancelar)
+  - Dashboard financeiro
+  - Envio de lembretes automáticos (WhatsApp, e-mail e SMS)
+
+---
+
+## 🧠 Roadmap
+
+- [ ] Lançamento do MVP
+- [ ] Integração com meios de pagamento
+- [ ] Suporte a múltiplos profissionais (plano avançado)
+- [ ] Aplicativo mobile (React Native)
+- [ ] Marketplace de serviços (opcional)
+
+---
+
+## 💙 Feito com carinho por João
+
+[🔗 LinkedIn](https://www.linkedin.com/in/joaosilvadeveloper/) • [🐙 GitHub](https://github.com/joaosilva-web)
