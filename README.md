@@ -38,7 +38,6 @@ O TôLivre é construído com uma stack moderna, escalável e preparada para Saa
 - **React**
 - **Tailwind CSS**
 - **Framer Motion** (animações fluidas)
-- **ShadCN UI** (componentização moderna)
 - **Zod + React Hook Form** (validação robusta de formulários)
 
 ### 🧠 Backend
