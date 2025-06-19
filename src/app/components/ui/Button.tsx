@@ -6,6 +6,7 @@ type CommonProps = {
   asLink?: boolean;
   mt?: "none" | "xs" | "sm" | "md" | "lg" | "xlg";
   size?: "xs" | "sm" | "md" | "lg" | "xlg";
+  w?: "auto" | "full";
 };
 
 // União de tipos com base na tag
@@ -19,6 +20,7 @@ export default function Button({
   asLink = false,
   mt = "none",
   size = "md",
+  w = "auto",
   ...props
 }: ButtonProps) {
   const baseClass =
@@ -47,7 +49,12 @@ export default function Button({
     xlg: "px-10 py-5 text-2xl",
   };
 
-  const className = `${baseClass} ${variants[variant]} ${marginTopMap[mt]} ${sizeMap[size]}`;
+  const widthMap = {
+    auto: "w-auto",
+    full: "w-full",
+  };
+
+  const className = `${baseClass} ${variants[variant]} ${marginTopMap[mt]} ${sizeMap[size]} ${widthMap[w]}`;
 
   if (asLink) {
     return (

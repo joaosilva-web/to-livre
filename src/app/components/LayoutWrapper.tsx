@@ -11,7 +11,7 @@ export default function LayoutWrapper({
 }) {
   const pathname = usePathname();
   const hideFooter = pathname !== "/leads";
-  const hideHeader = pathname == "/register";
+  const hideHeader = pathname == "/auth";
 
   return (
     <>
