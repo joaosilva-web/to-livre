@@ -12,7 +12,6 @@ import { useScrollMotion } from "@/hooks/useScrollMotion";
 import { bounceIn, bounceOut } from "@/animations/motionVariants";
 import Button from "../components/ui/Button";
 import Modal from "../components/ui/Modal";
-import Image from "next/image";
 
 const SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!;
 
@@ -80,13 +79,6 @@ export default function LeadsPage() {
 
   return (
     <section className="relative pt-[74px] min-h-screen flex items-center justify-center bg-gray-50">
-      <Image
-        src="/calendar.png"
-        alt="Background"
-        fill
-        className="object-cover"
-        priority
-      />
       <ReCAPTCHA sitekey={SITE_KEY} size="invisible" ref={recaptchaRef} />
       <Modal
         isOpen={responseIsOk}
@@ -108,11 +100,11 @@ export default function LeadsPage() {
         className="relative max-w-md w-full bg-white rounded-2xl shadow p-8 flex justify-center items-center"
       >
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <h1 className="text-xl font-bold text-center text-text">
-            🏗️App em desenvolvimento.🏗️
+          <h1 className="text-sm text-text-secondary text-center mb-1">
+            🛠️ App em desenvolvimento
           </h1>
-          <h2 className="text-xl font-bold text-center text-text">
-            Registre-se para receber novidades!
+          <h2 className="text-2xl font-bold text-center text-primary mb-6">
+            Cadastre-se para receber novidades!
           </h2>
 
           <div>
@@ -154,7 +146,7 @@ export default function LeadsPage() {
 
           <div>
             <label className="block mb-1 font-medium text-text-secondary">
-              Você tem interesse em assinar algum plano no lançamento?
+              Você tem interesse em assinar algum plano ?
             </label>
             <select
               {...register("interest")}
