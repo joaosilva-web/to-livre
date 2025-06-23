@@ -2,8 +2,8 @@ import { z } from "zod";
 import { PrismaClient } from "@/generated/prisma";
 import { NextResponse } from "next/server";
 
-import { verifyRecaptcha } from "@/app/lib/verifyRecaptcha";
-import { checkRateLimit } from "@/app/lib/rateLimit";
+import { verifyRecaptcha } from "../../libs/verifyRecaptcha";
+import { checkRateLimit } from "../../libs/rateLimit";
 
 const prisma = new PrismaClient();
 
