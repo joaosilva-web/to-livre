@@ -1,17 +1,17 @@
-// app/cadastro/page.tsx
 "use client";
 
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
 import { useScrollMotion } from "@/hooks/useScrollMotion";
 import { AnimatePresence, motion } from "framer-motion";
 import { bounceIn, bounceOut } from "@/animations/motionVariants";
+import Modal from "../components/ui/Modal";
+import { useReward } from "react-rewards";
 
-// ✅ Schemas de validação
 const registerSchema = z
   .object({
     name: z.string().min(2, { message: "Nome é obrigatório" }),
@@ -63,7 +63,7 @@ export default function AuthPage() {
 
   const onRegister = async (data: RegisterFormData) => {
     try {
-      const res = await fetch("/api/cadastro", {
+      const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -91,15 +91,17 @@ export default function AuthPage() {
     }
   };
 
-  if (success) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="bg-white p-6 rounded-xl shadow text-center text-green-600 text-xl font-semibold">
-          Cadastro realizado com sucesso!
-        </div>
-      </div>
-    );
-  }
+  const { reward: confettiReward } = useReward("confettiReward", "confetti", {
+    elementCount: 150,
+    elementSize: 16,
+    spread: 250,
+  });
+
+  useEffect(() => {
+    if (success) {
+      confettiReward();
+    }
+  }, [success]);
 
   return (
     <section
@@ -159,7 +161,10 @@ export default function AuthPage() {
               <div className="flex justify-center items-center">
                 <span
                   className="underline cursor-pointer text-blue-400 text-center text-sm"
-                  onClick={() => setIsLoginForm(false)}
+                  onClick={() => {
+                    setIsLoginForm(false);
+                    setErrorMessage("");
+                  }}
                 >
                   Não tem uma conta? Cadastre-se
                 </span>
@@ -222,7 +227,10 @@ export default function AuthPage() {
               <div className="flex justify-center items-center">
                 <span
                   className="underline cursor-pointer text-blue-400 text-center text-sm"
-                  onClick={() => setIsLoginForm(true)}
+                  onClick={() => {
+                    setIsLoginForm(true);
+                    setErrorMessage("");
+                  }}
                 >
                   Já possui uma conta? Entrar
                 </span>
@@ -231,6 +239,32 @@ export default function AuthPage() {
           )}
         </AnimatePresence>
       </div>
+
+      <Modal
+        isOpen={success}
+        onClose={() => {
+          setSuccess(false);
+          setIsLoginForm(true);
+        }}
+        title="Cadastro realizado 🎉"
+      >
+        <span id="confettiReward" className="relative inset-x-[50%]" />
+        <div className="flex flex-col items-center gap-4">
+          <p className="text-center text-text text-base">
+            Sua conta foi criada com sucesso! <br /> Agora é só fazer login para
+            começar a usar o TôLivre.
+          </p>
+
+          <Button
+            onClick={() => {
+              setSuccess(false);
+              setIsLoginForm(true);
+            }}
+          >
+            Fazer login
+          </Button>
+        </div>
+      </Modal>
     </section>
   );
 }

@@ -30,7 +30,7 @@ enum Interest {
 }
 
 model RateLimit {
-  id        Int   @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   ip        String
   count     Int
   expiresAt DateTime
@@ -38,4 +38,13 @@ model RateLimit {
   updatedAt DateTime @updatedAt
 
   @@index([ip])
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
