@@ -50,13 +50,16 @@ export default function Testimonials() {
       <div className="max-w-6xl mx-auto text-center">
         <motion.h2
           ref={heading.ref}
-          {...(heading.isVisible ? bounceIn : bounceOut)}
+          {...(heading.isVisible ? bounceIn(0) : bounceOut)}
           className="text-4xl md:text-5xl font-bold text-primary mb-16"
         >
           Quem usa, recomenda
         </motion.h2>
 
-        <motion.div ref={div.ref} {...(div.isVisible ? bounceIn : bounceOut)}>
+        <motion.div
+          ref={div.ref}
+          {...(div.isVisible ? bounceIn(0) : bounceOut)}
+        >
           <div ref={sliderRef} className="keen-slider mb-8 p-2">
             {testimonials.map((item, i) => (
               <div

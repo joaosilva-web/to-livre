@@ -12,7 +12,7 @@ export const slideUp: Variants = {
   exit: { y: 30, opacity: 0 },
 };
 
-export const bounceIn: Variants = {
+export const bounceIn = (delay = 0): Variants => ({
   initial: { scale: 0.5, opacity: 0 },
   animate: {
     scale: 1,
@@ -21,10 +21,11 @@ export const bounceIn: Variants = {
       type: "spring",
       stiffness: 300,
       damping: 20,
+      delay: delay,
     },
   },
   exit: { scale: 0.8, opacity: 0 },
-};
+});
 
 export const bounceOut: Variants = {
   initial: { scale: 1, opacity: 0 },

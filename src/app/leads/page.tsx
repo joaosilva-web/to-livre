@@ -77,11 +77,14 @@ export default function LeadsPage() {
   };
 
   return (
-    <section className="pt-[74] min-h-screen flex items-center justify-center bg-gray-50">
+    <section
+      className="pt-[74px] min-h-screen flex items-center justify-center bg-gray-50 bg-cover bg-center"
+      style={{ backgroundImage: "url('/calendar.png')" }}
+    >
       <ReCAPTCHA sitekey={SITE_KEY} size="invisible" ref={recaptchaRef} />
       <motion.div
         ref={card.ref}
-        {...(card.isVisible ? bounceIn : bounceOut)}
+        {...(card.isVisible ? bounceIn(0.5) : bounceOut)}
         className="relative max-w-md w-full bg-white rounded-2xl shadow p-8 flex justify-center items-center"
       >
         <span id="confetti" />
@@ -101,7 +104,7 @@ export default function LeadsPage() {
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <h1 className="text-2xl font-bold text-center text-primary">
-              Quero ficar por dentro das Novidades até o lançamento!
+              Registre-se para receber novidades!
             </h1>
 
             <div>

@@ -11,7 +11,7 @@ export default function Pricing() {
   const paragraph = useScrollMotion();
   const cta = useScrollMotion();
   const ctaFim = useScrollMotion();
-  const table = useScrollMotion(0.2);
+  // const table = useScrollMotion(0.2);
   const [isAnnual, setIsAnnual] = useState(false);
 
   const prices = {
@@ -24,7 +24,7 @@ export default function Pricing() {
       <div className="max-w-6xl mx-auto text-center">
         <motion.h2
           ref={heading.ref}
-          {...(heading.isVisible ? bounceIn : bounceOut)}
+          {...(heading.isVisible ? bounceIn(0) : bounceOut)}
           className="text-4xl md:text-5xl font-bold text-primary mb-4"
         >
           Comece grátis. Sem cartão. Só quando você crescer.
@@ -32,7 +32,7 @@ export default function Pricing() {
 
         <motion.p
           ref={paragraph.ref}
-          {...(paragraph.isVisible ? bounceIn : bounceOut)}
+          {...(paragraph.isVisible ? bounceIn(0) : bounceOut)}
           className="text-text text-lg mb-8 max-w-xl mx-auto"
         >
           Planos pensados para acompanhar o seu crescimento.
@@ -41,7 +41,7 @@ export default function Pricing() {
         {/* Toggle */}
         <motion.div
           ref={cta.ref}
-          {...(cta.isVisible ? bounceIn : bounceOut)}
+          {...(cta.isVisible ? bounceIn(0) : bounceOut)}
           className="flex items-center justify-center gap-4 mb-8"
         >
           <Button
@@ -61,11 +61,7 @@ export default function Pricing() {
         </motion.div>
 
         {/* Tabela */}
-        <motion.div
-          ref={table.ref}
-          {...(table.isVisible ? bounceIn : bounceOut)}
-          className="overflow-x-auto"
-        >
+        <motion.div className="overflow-x-auto">
           <table className="w-full border-collapse text-left rounded-xl overflow-hidden shadow-sm">
             <thead>
               <tr className="bg-gray-100 text-text">
@@ -121,7 +117,7 @@ export default function Pricing() {
         </motion.div>
         <motion.div
           ref={ctaFim.ref}
-          {...(ctaFim.isVisible ? bounceIn : bounceOut)}
+          {...(ctaFim.isVisible ? bounceIn(0) : bounceOut)}
         >
           <Button asLink href="/leads" mt="xlg">
             Quero começar de graça

@@ -124,7 +124,7 @@ export default function AuthPage() {
             <motion.form
               key="login"
               ref={loginForm.ref}
-              {...(isLoginForm ? bounceIn : bounceOut)}
+              {...(isLoginForm ? bounceIn(0) : bounceOut)}
               onSubmit={handleLoginSubmit(onLogin)}
               className="bg-white p-8 rounded-2xl shadow max-w-md w-full space-y-4 pb-6"
             >
@@ -174,7 +174,7 @@ export default function AuthPage() {
             <motion.form
               key="register"
               ref={registerForm.ref}
-              {...(!isLoginForm ? bounceIn : bounceOut)}
+              {...(!isLoginForm ? bounceIn(0) : bounceOut)}
               onSubmit={handleRegisterSubmit(onRegister)}
               className="bg-white p-8 rounded-2xl shadow max-w-md w-full space-y-4 pb-6"
             >

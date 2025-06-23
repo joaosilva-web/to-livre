@@ -1,3 +1,5 @@
+"use client";
+
 import { ButtonHTMLAttributes, AnchorHTMLAttributes } from "react";
 
 // Tipos possíveis de botão ou link

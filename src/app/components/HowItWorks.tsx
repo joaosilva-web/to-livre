@@ -18,7 +18,7 @@ export default function HowItWorks() {
       <div className="max-w-6xl mx-auto text-center">
         <motion.h2
           ref={heading.ref}
-          {...(heading.isVisible ? bounceIn : bounceOut)}
+          {...(heading.isVisible ? bounceIn(0) : bounceOut)}
           className="text-4xl md:text-5xl font-bold text-primary mb-16"
         >
           Como o TôLivre facilita seu dia a dia
@@ -28,7 +28,7 @@ export default function HowItWorks() {
           {/* Etapa 1 */}
           <motion.div
             ref={card.ref}
-            {...(card.isVisible ? bounceIn : bounceOut)}
+            {...(card.isVisible ? bounceIn(0) : bounceOut)}
             className="flex flex-col items-start gap-4"
           >
             <CalendarCheck className="text-primary w-10 h-10" />
@@ -43,7 +43,7 @@ export default function HowItWorks() {
           {/* Etapa 2 */}
           <motion.div
             ref={card2.ref}
-            {...(card2.isVisible ? bounceIn : bounceOut)}
+            {...(card2.isVisible ? bounceIn(0) : bounceOut)}
             className="flex flex-col items-start gap-4"
           >
             <BellRing className="text-primary w-10 h-10" />
@@ -58,7 +58,7 @@ export default function HowItWorks() {
           {/* Etapa 3 */}
           <motion.div
             ref={card3.ref}
-            {...(card3.isVisible ? bounceIn : bounceOut)}
+            {...(card3.isVisible ? bounceIn(0) : bounceOut)}
             className="flex flex-col items-start gap-4"
           >
             <CreditCard className="text-primary w-10 h-10" />
@@ -74,7 +74,7 @@ export default function HowItWorks() {
         {/* CTA Final */}
         <motion.div
           ref={cta.ref}
-          {...(cta.isVisible ? bounceIn : bounceOut)}
+          {...(cta.isVisible ? bounceIn(0) : bounceOut)}
           className="mt-16"
         >
           <Button asLink href="/leads" mt="sm">

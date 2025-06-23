@@ -18,7 +18,7 @@ export default function ForWhom() {
       <div className="max-w-5xl mx-auto text-center">
         <motion.h2
           ref={heading.ref}
-          {...(heading.isVisible ? bounceIn : bounceOut)}
+          {...(heading.isVisible ? bounceIn(0) : bounceOut)}
           className="text-4xl md:text-5xl font-bold text-primary mb-12"
         >
           Perfeito para quem vive de agenda
@@ -27,7 +27,7 @@ export default function ForWhom() {
         <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-8 text-left text-lg font-medium">
           <motion.div
             ref={card.ref}
-            {...(card.isVisible ? bounceIn : bounceOut)}
+            {...(card.isVisible ? bounceIn(0) : bounceOut)}
             className="bg-white shadow rounded-xl p-6 flex flex-col items-center gap-2 hover:shadow-lg transition-shadow"
           >
             <span className="text-4xl">💈</span>
@@ -35,7 +35,7 @@ export default function ForWhom() {
           </motion.div>
           <motion.div
             ref={card2.ref}
-            {...(card.isVisible ? bounceIn : bounceOut)}
+            {...(card.isVisible ? bounceIn(0) : bounceOut)}
             className="bg-white shadow rounded-xl p-6 flex flex-col items-center gap-2 hover:shadow-lg transition-shadow"
           >
             <span className="text-4xl">🧠</span>
@@ -43,7 +43,7 @@ export default function ForWhom() {
           </motion.div>
           <motion.div
             ref={card3.ref}
-            {...(card3.isVisible ? bounceIn : bounceOut)}
+            {...(card3.isVisible ? bounceIn(0) : bounceOut)}
             className="bg-white shadow rounded-xl p-6 flex flex-col items-center gap-2 hover:shadow-lg transition-shadow"
           >
             <span className="text-4xl">📸</span>
@@ -51,7 +51,7 @@ export default function ForWhom() {
           </motion.div>
           <motion.div
             ref={card4.ref}
-            {...(card4.isVisible ? bounceIn : bounceOut)}
+            {...(card4.isVisible ? bounceIn(0) : bounceOut)}
             className="bg-white shadow rounded-xl p-6 flex flex-col items-center gap-2 hover:shadow-lg transition-shadow"
           >
             <span className="text-4xl">💅</span>
@@ -61,7 +61,7 @@ export default function ForWhom() {
 
         <motion.p
           ref={paragraph.ref}
-          {...(paragraph.isVisible ? bounceIn : bounceOut)}
+          {...(paragraph.isVisible ? bounceIn(0) : bounceOut)}
           className="text-text text-lg mt-10 max-w-xl mx-auto"
         >
           Não importa sua profissão. Se você atende com horário marcado, o
@@ -70,7 +70,7 @@ export default function ForWhom() {
 
         <motion.div
           ref={cta.ref}
-          {...(cta.isVisible ? bounceIn : bounceOut)}
+          {...(cta.isVisible ? bounceIn(0) : bounceOut)}
           className="mt-8"
         >
           <Button asLink href="/leads">

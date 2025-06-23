@@ -36,7 +36,7 @@ export default function FAQ() {
       <div className="max-w-3xl mx-auto">
         <motion.h2
           ref={heading.ref}
-          {...(heading.isVisible ? bounceIn : bounceOut)}
+          {...(heading.isVisible ? bounceIn(0) : bounceOut)}
           className="text-4xl md:text-5xl font-bold text-center text-primary mb-12"
         >
           Dúvidas frequentes

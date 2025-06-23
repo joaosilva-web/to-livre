@@ -19,7 +19,7 @@ export default function Hero() {
         <div className="text-center md:text-left flex flex-col gap-6">
           <motion.h2
             ref={heading.ref}
-            {...(heading.isVisible ? bounceIn : bounceOut)}
+            {...(heading.isVisible ? bounceIn(0) : bounceOut)}
             className="text-4xl md:text-4xl font-extrabold text-primary leading-tight"
           >
             Sua agenda organizada, clientes lembrados, pagamentos garantidos.
@@ -27,7 +27,7 @@ export default function Hero() {
 
           <motion.p
             ref={paragraph.ref}
-            {...(paragraph.isVisible ? bounceIn : bounceOut)}
+            {...(paragraph.isVisible ? bounceIn(0) : bounceOut)}
             className="text-lg md:text-xl text-text"
           >
             O TôLivre cuida de tudo para você: agendamentos online, lembretes
@@ -38,7 +38,7 @@ export default function Hero() {
           <div className="flex flex-col sm:flex-row gap-6 justify-center md:justify-start">
             <motion.div
               ref={cta.ref}
-              {...(cta.isVisible ? bounceIn : bounceOut)}
+              {...(cta.isVisible ? bounceIn(0) : bounceOut)}
               className="flex flex-col sm:flex-row sm:items-center gap-4 mt-2"
             >
               <Button asLink href="/leads">
@@ -47,7 +47,7 @@ export default function Hero() {
             </motion.div>
             <motion.div
               ref={cta.ref}
-              {...(cta.isVisible ? bounceIn : bounceOut)}
+              {...(cta.isVisible ? bounceIn(0) : bounceOut)}
               className="flex flex-col sm:flex-row sm:items-center gap-4 mt-2"
             >
               <Button asLink href="/leads" variant="outlined">
@@ -60,7 +60,7 @@ export default function Hero() {
         {/* Imagem */}
         <motion.div
           ref={div.ref}
-          {...(div.isVisible ? bounceIn : bounceOut)}
+          {...(div.isVisible ? bounceIn(0) : bounceOut)}
           className="flex justify-center md:justify-end"
         >
           <Image

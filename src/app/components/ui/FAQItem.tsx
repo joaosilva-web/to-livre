@@ -17,7 +17,7 @@ export default function FAQItem({ question, answer }: FAQItemProps) {
   return (
     <motion.div
       ref={ref}
-      {...(isVisible ? bounceIn : bounceOut)}
+      {...(isVisible ? bounceIn(0) : bounceOut)}
       className="border border-gray-200 rounded-xl overflow-hidden shadow-sm bg-white"
     >
       <button

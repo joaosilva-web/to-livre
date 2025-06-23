@@ -1,3 +1,5 @@
+"use client";
+
 import FAQ from "./components/Faq";
 import ForWhom from "./components/ForWhom";
 import Hero from "./components/Hero";
