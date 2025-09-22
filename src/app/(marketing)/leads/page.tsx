@@ -10,8 +10,8 @@ import { useReward } from "react-rewards";
 import { motion } from "framer-motion";
 import { useScrollMotion } from "@/hooks/useScrollMotion";
 import { bounceIn, bounceOut } from "@/animations/motionVariants";
-import Button from "../components/ui/Button";
-import Modal from "../components/ui/Modal";
+import Modal from "@/app/components/ui/Modal";
+import Button from "@/app/components/ui/Button";
 
 const SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!;
 
