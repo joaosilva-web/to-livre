@@ -78,7 +78,7 @@ export default function LeadsPage() {
   };
 
   return (
-    <section className="relative pt-[74px] min-h-screen flex items-center justify-center bg-gray-50">
+    <section className="relative pt-[74px] min-h-screen flex items-center justify-center bg-background-muted">
       <ReCAPTCHA sitekey={SITE_KEY} size="invisible" ref={recaptchaRef} />
       <Modal
         isOpen={responseIsOk}
@@ -109,7 +109,7 @@ export default function LeadsPage() {
 
           <div>
             {errorMessage && (
-              <div className="mt-4 text-center text-red-600 text-sm font-medium mb-4">
+              <div className="mt-4 text-center text-feedback-error text-sm font-medium mb-4">
                 {errorMessage}
               </div>
             )}
@@ -119,11 +119,13 @@ export default function LeadsPage() {
             <input
               type="text"
               {...register("name")}
-              className="py-2 px-4 text-text-secondary block w-full rounded-md border-gray-300 shadow-sm focus:outline-primary"
+              className="py-2 px-4 text-text-secondary block w-full rounded-md border-border shadow-sm focus:outline-primary"
               placeholder="Seu nome"
             />
             {errors.name && (
-              <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
+              <p className="text-feedback-error text-sm mt-1">
+                {errors.name.message}
+              </p>
             )}
           </div>
 
@@ -134,11 +136,11 @@ export default function LeadsPage() {
             <input
               type="email"
               {...register("email")}
-              className="py-2 px-4 text-text-secondary block w-full rounded-md border-gray-300 shadow-sm focus:outline-primary"
+              className="py-2 px-4 text-text-secondary block w-full rounded-md border-border shadow-sm focus:outline-primary"
               placeholder="Seu melhor e-mail"
             />
             {errors.email && (
-              <p className="text-red-500 text-sm mt-1">
+              <p className="text-feedback-error text-sm mt-1">
                 {errors.email.message}
               </p>
             )}
@@ -150,7 +152,7 @@ export default function LeadsPage() {
             </label>
             <select
               {...register("interest")}
-              className="py-2 px-4 text-text-secondary block w-full rounded-md border-gray-300 shadow-sm focus:outline-primary"
+              className="py-2 px-4 text-text-secondary block w-full rounded-md border-border shadow-sm focus:outline-primary"
             >
               <option value="">Selecione</option>
               <option value="sim">Sim</option>
@@ -158,7 +160,7 @@ export default function LeadsPage() {
               <option value="talvez">Talvez</option>
             </select>
             {errors.interest && (
-              <p className="text-red-500 text-sm mt-1">
+              <p className="text-feedback-error text-sm mt-1">
                 {errors.interest.message}
               </p>
             )}
