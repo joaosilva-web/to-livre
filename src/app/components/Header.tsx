@@ -15,7 +15,7 @@ export default function Header() {
     { label: "Como funciona", href: "/#how" },
     { label: "Para quem é", href: "/#who" },
     { label: "Dúvidas", href: "/#faq" },
-    { label: "Entrar", href: "/login" },
+    { label: "Entrar", href: "/leads" },
   ];
 
   return (
@@ -35,7 +35,7 @@ export default function Header() {
           <FullLogo />
 
           {/* Menu Desktop */}
-          <nav className="hidden md:flex items-center gap-6 text-text">
+          <nav className="hidden lg:flex items-center gap-6 text-text">
             {navItems.map(({ label, href }) => (
               <a
                 key={href}
@@ -52,7 +52,7 @@ export default function Header() {
 
           {/* Botão Mobile */}
           <button
-            className="md:hidden"
+            className="lg:hidden"
             onClick={() => setIsOpen((prev) => !prev)}
             aria-label="Abrir menu"
           >
@@ -76,7 +76,7 @@ export default function Header() {
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.4, ease: "easeInOut" }}
-              className="md:hidden overflow-hidden px-6 pb-4 bg-white flex flex-col gap-4 text-text"
+              className="lg:hidden overflow-hidden px-6 pb-4 bg-white flex flex-col gap-4 text-text"
             >
               {navItems.map(({ label, href }) => (
                 <a

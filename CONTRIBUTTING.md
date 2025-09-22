@@ -1,4 +1,4 @@
-# 📘 Contribuindo com o projeto TôLivre
+# 📘 Contribuindo com o projeto Ocupaê
 
 Este projeto segue o padrão de commits **[Conventional Commits](https://www.conventionalcommits.org/)** para manter um histórico limpo e facilitar automações como geração de changelog.
 

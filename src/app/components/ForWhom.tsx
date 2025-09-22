@@ -65,7 +65,7 @@ export default function ForWhom() {
           className="text-text text-lg mt-10 max-w-xl mx-auto"
         >
           Não importa sua profissão. Se você atende com horário marcado, o
-          TôLivre é pra você.
+          Agendaê é pra você.
         </motion.p>
 
         <motion.div

@@ -21,7 +21,7 @@ export default function FullLogo() {
             damping: 20,
           }}
         >
-          TôLivre
+          Agendaê
         </motion.h1>
       </AnimatePresence>
     </Link>

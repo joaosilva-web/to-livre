@@ -9,7 +9,7 @@ const faqs = [
   {
     question: "Preciso instalar algo?",
     answer:
-      "Não! O TôLivre funciona direto do navegador, no seu celular ou computador. Nada para baixar.",
+      "Não! O Ocupaê funciona direto do navegador, no seu celular ou computador. Nada para baixar.",
   },
   {
     question: "O que acontece se eu tiver muitos clientes?",
@@ -24,7 +24,7 @@ const faqs = [
   {
     question: "Dá pra usar no celular?",
     answer:
-      "Com certeza. O TôLivre é responsivo e feito para funcionar perfeitamente no seu smartphone.",
+      "Com certeza. O Ocupaê é responsivo e feito para funcionar perfeitamente no seu smartphone.",
   },
 ];
 

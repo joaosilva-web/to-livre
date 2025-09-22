@@ -14,9 +14,9 @@ export default function Hero() {
 
   return (
     <section className="min-h-screen flex items-center justify-center px-6 pt-28 bg-bg">
-      <div className="max-w-6xl w-full mx-auto grid md:grid-cols-2 items-center gap-12">
+      <div className="max-w-6xl w-full mx-auto grid lg:grid-cols-2 items-center gap-12">
         {/* Texto */}
-        <div className="text-center md:text-left flex flex-col gap-6">
+        <div className="text-center lg:text-left flex flex-col gap-6">
           <motion.h2
             ref={heading.ref}
             {...(heading.isVisible ? bounceIn(0) : bounceOut)}
@@ -30,12 +30,12 @@ export default function Hero() {
             {...(paragraph.isVisible ? bounceIn(0) : bounceOut)}
             className="text-lg md:text-xl text-text"
           >
-            O TôLivre cuida de tudo para você: agendamentos online, lembretes
+            O Ocupaê cuida de tudo para você: agendamentos online, lembretes
             automáticos e cobrança sem estresse. Ideal para autônomos que querem
             focar no que fazem de melhor.
           </motion.p>
 
-          <div className="flex flex-col sm:flex-row gap-6 justify-center md:justify-start">
+          <div className="flex flex-col sm:flex-row gap-6 justify-center lg:justify-start">
             <motion.div
               ref={cta.ref}
               {...(cta.isVisible ? bounceIn(0) : bounceOut)}
@@ -64,11 +64,11 @@ export default function Hero() {
           className="flex justify-center md:justify-end"
         >
           <Image
-            src="/mockup.png"
-            alt="Mockup da plataforma TôLivre em um celular"
-            width={400}
-            height={500}
-            className="w-full max-w-[360px]"
+            src="/hero.png"
+            alt="Mockup da plataforma Ocupaê em um celular"
+            width={600}
+            height={800}
+            className="w-full max-w-[600px]"
           />
         </motion.div>
       </div>

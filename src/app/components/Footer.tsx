@@ -18,7 +18,7 @@ export default function Footer() {
                 height={36}
                 alt="Logo de um calendário verde com uma asa lateral"
               />
-              <p className="text-3xl font-bold">TôLivre</p>
+              <p className="text-3xl font-bold">Ocupaê</p>
             </Link>
           </div>
           <p className="text-white max-w-xs">
@@ -69,7 +69,7 @@ export default function Footer() {
       {/* Copyright */}
       <div className="flex flex-col border-t border-white/20 py-6 text-center text-xs">
         <p className="opacity-70">
-          © {new Date().getFullYear()} TôLivre. Todos os direitos reservados.
+          © {new Date().getFullYear()} Ocupaê. Todos os direitos reservados.
         </p>
         <a
           href="https://github.com/joaosilva-web"

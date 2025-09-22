@@ -10,7 +10,7 @@ import { bounceIn, bounceOut } from "@/animations/motionVariants";
 export default function Testimonials() {
   const testimonials = [
     {
-      text: "“Antes, eu esquecia clientes. Agora, o TôLivre me lembra tudo.”",
+      text: "“Antes, eu esquecia clientes. Agora, o Agendaê me lembra tudo.”",
       author: "Camila, manicure",
     },
     {
