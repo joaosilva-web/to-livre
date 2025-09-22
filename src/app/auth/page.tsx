@@ -252,7 +252,7 @@ export default function AuthPage() {
         <div className="flex flex-col items-center gap-4">
           <p className="text-center text-text text-base">
             Sua conta foi criada com sucesso! <br /> Agora é só fazer login para
-            começar a usar o Agendaê.
+            começar a usar o Ocupaê.
           </p>
 
           <Button

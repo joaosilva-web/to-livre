@@ -21,7 +21,7 @@ export default function HowItWorks() {
           {...(heading.isVisible ? bounceIn(0) : bounceOut)}
           className="text-4xl md:text-5xl font-bold text-primary mb-16"
         >
-          Como o Agendaê facilita seu dia a dia
+          Como o Ocupaê facilita seu dia a dia
         </motion.h2>
 
         <div className="grid md:grid-cols-3 gap-12 text-left">
