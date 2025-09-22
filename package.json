@@ -16,6 +16,7 @@
     "@types/bcrypt": "^5.0.2",
     "bcrypt": "^6.0.0",
     "framer-motion": "^12.15.0",
+    "jsonwebtoken": "^9.0.2",
     "keen-slider": "^6.8.6",
     "lottie-react": "^2.4.1",
     "lucide-react": "^0.511.0",
@@ -30,6 +31,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

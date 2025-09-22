@@ -83,12 +83,18 @@ export default function AuthPage() {
   };
 
   const onLogin = async (data: LoginFormData) => {
-    try {
-      console.log("Login data:", data);
-    } catch (error) {
-      console.error(error);
-      setErrorMessage("Erro ao tentar login.");
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify(data),
+      headers: { "Content-Type": "application/json" },
+    });
+
+    if (!res.ok) {
+      setErrorMessage("Login inválido");
+      return;
     }
+
+    window.location.href = "/dashboard";
   };
 
   const { reward: confettiReward } = useReward("confettiReward", "confetti", {
