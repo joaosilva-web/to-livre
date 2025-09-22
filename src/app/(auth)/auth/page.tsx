@@ -4,13 +4,13 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
-import Input from "../components/ui/Input";
-import Button from "../components/ui/Button";
 import { useScrollMotion } from "@/hooks/useScrollMotion";
 import { AnimatePresence, motion } from "framer-motion";
 import { bounceIn, bounceOut } from "@/animations/motionVariants";
-import Modal from "../components/ui/Modal";
 import { useReward } from "react-rewards";
+import Input from "@/app/components/ui/Input";
+import Button from "@/app/components/ui/Button";
+import Modal from "@/app/components/ui/Modal";
 
 const registerSchema = z
   .object({
