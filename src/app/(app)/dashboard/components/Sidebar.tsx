@@ -8,6 +8,7 @@ const links = [
   { label: "Dashboard", href: "/dashboard" },
   { label: "Analytics", href: "/dashboard/analytics" },
   { label: "Perfil", href: "/dashboard/profile" },
+  { label: "Empresa", href: "/dashboard/company" },
 ];
 
 export default function Sidebar() {
