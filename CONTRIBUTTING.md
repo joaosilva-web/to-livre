@@ -51,6 +51,7 @@ Você pode usar escopos para deixar claro onde a alteração foi feita:
 | `ui`       | Componentes de interface                                |
 | `layout`   | Estrutura visual da aplicação (Header, Footer, etc)     |
 | `config`   | Configurações do projeto, como Docker, ESLint, etc      |
+| `utils`    | Funções utilitárias e helpers                           |
 
 ---
 
