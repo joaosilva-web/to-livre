@@ -3,10 +3,14 @@ import { cookies } from "next/headers";
 
 const EXPIRES_IN = 60 * 60 * 24; // 1 dia em segundos
 
+export type Role = "OWNER" | "MANAGER" | "EMPLOYEE";
+
 export interface JWTPayload {
   id: string;
   name: string;
   email: string;
+  role: Role;
+  companyId?: string | null;
 }
 
 // Função simples de "assinatura" de token (base64)
@@ -19,7 +23,7 @@ export function signToken(payload: JWTPayload) {
 }
 
 // Função de verificação do token
-export function verifyToken(token: string) {
+export function verifyToken(token: string): JWTPayload | null {
   try {
     const decoded = JSON.parse(Buffer.from(token, "base64").toString("utf-8"));
     if (decoded.exp < Date.now()) return null;
@@ -30,9 +34,13 @@ export function verifyToken(token: string) {
 }
 
 // Pegar usuário do cookie (server)
-export async function getUserFromCookie() {
+export async function getUserFromCookie(): Promise<JWTPayload | null> {
   const cookieStore = cookies();
   const token = (await cookieStore).get("token")?.value;
   if (!token) return null;
-  return verifyToken(token);
+
+  const user = verifyToken(token);
+  if (!user) return null;
+
+  return user;
 }
