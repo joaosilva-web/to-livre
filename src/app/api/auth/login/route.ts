@@ -20,7 +20,13 @@ export async function POST(req: Request) {
   if (!isValid)
     return NextResponse.json({ error: "Senha inválida" }, { status: 401 });
 
-  const token = signToken({ id: user.id, name: user.name, email: user.email });
+  const token = signToken({
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    companyId: user.companyId,
+  });
 
   const res = NextResponse.json({
     message: "Login realizado com sucesso",
