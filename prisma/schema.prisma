@@ -40,11 +40,42 @@ model RateLimit {
   @@index([ip])
 }
 
+model Company {
+  id            String      @id @default(cuid())
+  nomeFantasia  String
+  razaoSocial   String?
+  cnpjCpf       String      @unique
+  endereco      String?
+  telefone      String?
+  email         String?
+  contrato      ContractType @default(FREE)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime @updatedAt
+
+  users         User[]
+}
+
+enum ContractType {
+  FREE
+  PRO
+  PREMIUM
+  ENTERPRISE
+}
+
 model User {
   id        String   @id @default(cuid())
   name      String
   email     String   @unique
   password  String
+  role      Role     @default(EMPLOYEE)
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+enum Role {
+  OWNER       // Dono/autônomo da empresa
+  MANAGER     // Líder/supervisor
+  EMPLOYEE    // Funcionário comum
 }
