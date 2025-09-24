@@ -7,14 +7,14 @@ const prisma = new PrismaClient();
 
 export async function GET(
   req: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   const user: JWTPayload | null = await getUserFromCookie();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { id } = context.params;
+  const { id } = params;
 
   if (user.companyId !== id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
