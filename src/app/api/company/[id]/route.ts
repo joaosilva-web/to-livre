@@ -5,14 +5,14 @@ import { getUserFromCookie, JWTPayload } from "@/app/libs/auth";
 
 const prisma = new PrismaClient();
 
-interface Params {
-  params: { id: string };
-}
-
-export async function GET(req: NextRequest, { params }: Params) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
   const user: JWTPayload | null = await getUserFromCookie();
-  if (!user)
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const { id } = params;
 
@@ -26,11 +26,12 @@ export async function GET(req: NextRequest, { params }: Params) {
       where: { id },
     });
 
-    if (!company)
+    if (!company) {
       return NextResponse.json(
         { error: "Empresa não encontrada" },
         { status: 404 }
       );
+    }
 
     return NextResponse.json(company, { status: 200 });
   } catch (error) {
