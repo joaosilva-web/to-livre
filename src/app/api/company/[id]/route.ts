@@ -7,16 +7,15 @@ const prisma = new PrismaClient();
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   const user: JWTPayload | null = await getUserFromCookie();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { id } = params;
+  const { id } = context.params;
 
-  // Só permite pegar empresa se for a mesma vinculada ao usuário
   if (user.companyId !== id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
