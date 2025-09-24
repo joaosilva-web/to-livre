@@ -7,7 +7,8 @@ const prisma = new PrismaClient();
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  { params }: any
 ) {
   const user: JWTPayload | null = await getUserFromCookie();
   if (!user) {
