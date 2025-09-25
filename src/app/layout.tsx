@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
 import LayoutWrapper from "./components/LayoutWrapper";
+import { Theme } from "@radix-ui/themes";
 
 const geistPoppins = Poppins({
   variable: "--font-geist-poppins",
@@ -29,7 +30,9 @@ export default function RootLayout({
       <body
         className={`${geistPoppins.variable} ${geistInter.variable} antialiased`}
       >
-        <LayoutWrapper>{children}</LayoutWrapper>
+        <Theme accentColor="jade" grayColor="sand" radius="large">
+          <LayoutWrapper>{children}</LayoutWrapper>
+        </Theme>
       </body>
     </html>
   );
