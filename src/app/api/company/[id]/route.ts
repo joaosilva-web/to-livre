@@ -5,11 +5,13 @@ import { getUserFromCookie, JWTPayload } from "@/app/libs/auth";
 
 const prisma = new PrismaClient();
 
-export async function GET(
-  req: NextRequest,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  { params }: any
-) {
+interface CompanyParams {
+  id: string;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function GET(req: NextRequest, context: any) {
+  const { params } = context as { params: CompanyParams };
   const user: JWTPayload | null = await getUserFromCookie();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
