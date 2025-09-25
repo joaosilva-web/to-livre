@@ -6,9 +6,8 @@ import { usePathname } from "next/navigation";
 
 const links = [
   { label: "Dashboard", href: "/dashboard" },
-  { label: "Analytics", href: "/dashboard/analytics" },
-  { label: "Perfil", href: "/dashboard/profile" },
   { label: "Empresa", href: "/dashboard/company" },
+  { label: "Agendamentos", href: "/dashboard/appointments" },
 ];
 
 export default function Sidebar() {
@@ -24,7 +23,7 @@ export default function Sidebar() {
       "
     >
       {/* Header sem borda/sombra */}
-      <div className="h-[72px] flex justify-center items-center">
+      <div className="h-[72px] flex justify-start items-center">
         <FullLogo />
       </div>
 
