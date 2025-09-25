@@ -11,8 +11,13 @@ export default function FullLogo() {
       <AnimatePresence>
         <motion.h1
           className="text-3xl font-bold text-primary"
-          initial={{ x: "-10%", width: 0, overflow: "hidden" }}
-          animate={{ x: 0, width: "auto" }}
+          initial={{
+            x: "-10%",
+            display: "none",
+            width: "0",
+            overflow: "hidden",
+          }}
+          animate={{ x: 0, width: "auto", display: "block" }}
           exit={{ x: "-10%", width: 0, overflow: "hidden" }}
           transition={{
             delay: 0.3,
