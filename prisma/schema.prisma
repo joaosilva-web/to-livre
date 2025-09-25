@@ -53,6 +53,7 @@ model Company {
   updatedAt     DateTime @updatedAt
 
   users         User[]
+  appointments  Appointment[]
 }
 
 enum ContractType {
@@ -63,19 +64,46 @@ enum ContractType {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  password  String
-  role      Role     @default(OWNER)
-  companyId String?
-  company   Company? @relation(fields: [companyId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String        @id @default(cuid())
+  name          String
+  email         String        @unique
+  password      String
+  role          Role          @default(OWNER)
+  companyId     String?
+  company       Company?      @relation(fields: [companyId], references: [id])
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  appointments  Appointment[] @relation("UserAppointments")
 }
+
 
 enum Role {
   OWNER       // Dono/autônomo da empresa
   MANAGER     // Líder/supervisor
   EMPLOYEE    // Funcionário comum
+}
+
+model Appointment {
+  id             String          @id @default(cuid())
+  companyId      String
+  company        Company         @relation(fields: [companyId], references: [id])
+  professionalId String
+  professional   User            @relation("UserAppointments", fields: [professionalId], references: [id])
+  clientName     String
+  service        String
+  price          Float?
+  date           DateTime
+  status         AppointmentStatus @default(PENDING)
+
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELED
 }
