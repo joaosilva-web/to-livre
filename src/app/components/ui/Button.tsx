@@ -26,7 +26,7 @@ export default function Button({
   ...props
 }: ButtonProps) {
   const baseClass =
-    "rounded-full font-semibold hover:scale-105 cursor-pointer transition";
+    "rounded font-semibold hover:scale-105 cursor-pointer transition";
 
   const variants = {
     primary: "bg-primary text-white hover:bg-primary-hover",
@@ -45,7 +45,7 @@ export default function Button({
 
   const sizeMap = {
     xs: "px-2 py-1 text-xs",
-    sm: "px-3 py-3 text-sm",
+    sm: "px-3 py-2 text-sm",
     md: "px-6 py-3 text-lg",
     lg: "px-8 py-4 text-lg",
     xlg: "px-10 py-5 text-2xl",
