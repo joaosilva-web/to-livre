@@ -1,10 +1,11 @@
 // src/app/dashboard/appointments/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Filters from "./FilterProps";
 import AppointmentsList from "./AppointmentList";
 import AppointmentForm from "./AppointmentForm";
+import prismaToUI, { UIAppointment } from "@/lib/appointments";
 import Button from "@/app/components/ui/Button";
 import { Appointment } from "@/generated/prisma"; // <-- Importa o tipo do Prisma
 
@@ -15,9 +16,9 @@ interface FiltersState {
 }
 
 export default function AppointmentsPage() {
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [appointments, setAppointments] = useState<UIAppointment[]>([]);
   const [selectedAppointment, setSelectedAppointment] =
-    useState<Appointment | null>(null);
+    useState<UIAppointment | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [filters, setFilters] = useState<FiltersState>({
     status: "",
@@ -25,7 +26,7 @@ export default function AppointmentsPage() {
     to: "",
   });
 
-  const fetchAppointments = async () => {
+  const fetchAppointments = useCallback(async () => {
     const query: string[] = [];
     if (filters.status && filters.status !== "ALL")
       query.push(`status=${filters.status}`);
@@ -35,15 +36,16 @@ export default function AppointmentsPage() {
     const res = await fetch(
       `/api/appointments${query.length ? `?${query.join("&")}` : ""}`
     );
-    const data: Appointment[] = await res.json();
-    setAppointments(data);
-  };
+  const data: Appointment[] = await res.json();
+  const ui = data.map((d) => prismaToUI(d)!).filter(Boolean) as UIAppointment[];
+  setAppointments(ui);
+  }, [filters]);
 
   useEffect(() => {
     fetchAppointments();
-  }, [filters]);
+  }, [fetchAppointments]);
 
-  const handleEdit = (appointment: Appointment) => {
+  const handleEdit = (appointment: UIAppointment) => {
     setSelectedAppointment(appointment);
     setShowForm(true);
   };

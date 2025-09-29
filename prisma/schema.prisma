@@ -41,19 +41,21 @@ model RateLimit {
 }
 
 model Company {
-  id            String      @id @default(cuid())
+  id            String       @id @default(cuid())
   nomeFantasia  String
   razaoSocial   String?
-  cnpjCpf       String      @unique
+  cnpjCpf       String       @unique
   endereco      String?
   telefone      String?
   email         String?
   contrato      ContractType @default(FREE)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
   users         User[]
   appointments  Appointment[]
+  workingHours  WorkingHours[]
+  services      Service[]
 }
 
 enum ContractType {
@@ -61,6 +63,40 @@ enum ContractType {
   PRO
   PREMIUM
   ENTERPRISE
+}
+
+model WorkingHours {
+  id         String   @id @default(cuid())
+  companyId  String
+  company    Company  @relation(fields: [companyId], references: [id])
+  dayOfWeek  Int      // 0 = Domingo, 6 = Sábado
+  openTime   String   // formato HH:mm
+  closeTime  String   // formato HH:mm
+}
+
+model Service {
+  id          String               @id @default(cuid())
+  companyId   String
+  company     Company              @relation(fields: [companyId], references: [id])
+  name        String
+  price       Float
+  duration    Int                  // em minutos
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  appointments Appointment[]
+  professionals ProfessionalService[]
+}
+
+model ProfessionalService {
+  id             String  @id @default(cuid())
+  professionalId String
+  serviceId      String
+
+  professional   User    @relation(fields: [professionalId], references: [id])
+  service        Service @relation(fields: [serviceId], references: [id])
+
+  @@unique([professionalId, serviceId]) // um profissional não pode ter o mesmo serviço duplicado
 }
 
 model User {
@@ -75,7 +111,9 @@ model User {
   updatedAt     DateTime      @updatedAt
 
   appointments  Appointment[] @relation("UserAppointments")
+  services      ProfessionalService[]
 }
+
 
 
 enum Role {
@@ -85,21 +123,22 @@ enum Role {
 }
 
 model Appointment {
-  id             String          @id @default(cuid())
+  id             String            @id @default(cuid())
   companyId      String
-  company        Company         @relation(fields: [companyId], references: [id])
+  company        Company           @relation(fields: [companyId], references: [id])
   professionalId String
-  professional   User            @relation("UserAppointments", fields: [professionalId], references: [id])
+  professional   User              @relation("UserAppointments", fields: [professionalId], references: [id])
   clientName     String
-  service        String
+  serviceId      String
+  service        Service           @relation(fields: [serviceId], references: [id])
   price          Float?
-  date           DateTime
+  startTime      DateTime
+  endTime        DateTime
   status         AppointmentStatus @default(PENDING)
 
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
 }
-
 
 enum AppointmentStatus {
   PENDING

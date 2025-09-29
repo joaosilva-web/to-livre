@@ -59,3 +59,38 @@ h3,
 .titulo {
   font-family: "Poppins", sans-serif;
 }
+
+/* gap entre os dias do mês */
+.react-calendar__month-view__days,
+.react-calendar__month-view__weekdays {
+  display: grid !important;
+  grid-template-columns: repeat(7, 1fr) !important;
+  gap: 4px;
+}
+
+.react-calendar__month-view__weekdays__weekday {
+  color: #555555 !important;
+  font-weight: 900 !important;
+}
+
+.react-calendar__month-view__weekdays__weekday abbr {
+  text-decoration: none !important;
+}
+
+.react-calendar__navigation__prev-button,
+.react-calendar__navigation__next-button,
+.react-calendar__navigation__label {
+  border-radius: 0.375rem !important;
+  background: transparent !important;
+}
+
+.react-calendar__navigation__prev-button:hover,
+.react-calendar__navigation__next-button:hover,
+.react-calendar__navigation__label:hover {
+  background: #f0f0f0 !important;
+}
+
+.react-calendar__navigation__label__labelText {
+  font-weight: 900 !important;
+  color: #555555 !important;
+}

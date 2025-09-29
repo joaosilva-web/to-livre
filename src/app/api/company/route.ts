@@ -1,10 +1,10 @@
 // app/api/company/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient, Company } from "@/generated/prisma";
+import { Company } from "@/generated/prisma";
 import { getUserFromCookie, JWTPayload } from "@/app/libs/auth";
 import { z, ZodError } from "zod";
 
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 // Schema para validar dados da empresa
 const companySchema = z.object({

@@ -1,11 +1,10 @@
 import { z } from "zod";
-import { PrismaClient } from "@/generated/prisma";
 import { NextResponse } from "next/server";
 
 import { verifyRecaptcha } from "../../libs/verifyRecaptcha";
 import { checkRateLimit } from "../../libs/rateLimit";
 
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 const leadSchema = z.object({
   name: z.string().min(2),
