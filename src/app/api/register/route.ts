@@ -1,62 +1,42 @@
-import { NextResponse } from "next/server";
-import { PrismaClient } from "@/generated/prisma";
-import { hashPassword } from "../../libs/hash";
-import { registerSchema } from "../../validators/auth";
-
-const prisma = new PrismaClient();
+// src/app/api/auth/register/route.ts
+import prisma from "@/lib/prisma";
+import bcrypt from "bcrypt";
+import { verifyRecaptcha } from "@/app/libs/verifyRecaptcha";
+import { checkRateLimit } from "@/app/libs/rateLimit";
 
 export async function POST(req: Request) {
-  try {
-    const body = await req.json();
+  const body = await req.json();
+  const { name, email, password, recaptchaToken } = body as {
+    name: string;
+    email: string;
+    password: string;
+    recaptchaToken?: string;
+  };
 
-    const result = registerSchema.safeParse(body);
+  // Rate limit by IP (best-effort using x-forwarded-for header)
+  const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown";
+  const allowed = await checkRateLimit(ip);
+  if (!allowed)
+    return new Response(JSON.stringify({ message: "Too many requests" }), { status: 429 });
 
-    if (!result.success) {
-      const errorMessages = result.error.format();
-      return NextResponse.json(
-        { message: "Dados inválidos", errors: errorMessages },
-        { status: 400 }
-      );
-    }
-
-    const { name, email, password } = result.data;
-
-    // Verifica se o usuário já existe
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (existingUser) {
-      return NextResponse.json(
-        { message: "Este e-mail já está cadastrado." },
-        { status: 400 }
-      );
-    }
-
-    // Hashear senha
-    const hashedPassword = await hashPassword(password);
-
-    // Cria o usuário
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-      },
-    });
-
-    return NextResponse.json(
-      {
-        message: "Usuário cadastrado com sucesso",
-        user: { id: user.id, email: user.email, name: user.name },
-      },
-      { status: 201 }
-    );
-  } catch (error) {
-    console.error("Erro no cadastro:", error);
-    return NextResponse.json(
-      { message: "Erro interno no servidor" },
-      { status: 500 }
-    );
+  // If recaptcha is configured, verify token
+  if (recaptchaToken) {
+    const ok = await verifyRecaptcha(recaptchaToken);
+    if (!ok) return new Response(JSON.stringify({ message: "reCAPTCHA failed" }), { status: 400 });
   }
+
+  const exists = await prisma.user.findUnique({ where: { email } });
+  if (exists)
+    return new Response(JSON.stringify({ message: "E-mail já cadastrado" }), {
+      status: 400,
+    });
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  await prisma.user.create({ data: { name, email, password: hashedPassword } });
+
+  return new Response(
+    JSON.stringify({ message: "Usuário criado com sucesso" }),
+    { status: 201 }
+  );
 }

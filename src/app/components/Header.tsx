@@ -1,6 +1,6 @@
 "use client"; // se estiver usando App Router (Next 13+)
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 // import Image from "next/image";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -10,6 +10,7 @@ import Button from "./ui/Button";
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
+  const [user, setUser] = useState<{ id: string; name: string } | null>(null);
 
   const navItems = [
     { label: "Como funciona", href: "/#how" },
@@ -17,6 +18,33 @@ export default function Header() {
     { label: "Dúvidas", href: "/#faq" },
     { label: "Entrar", href: "/leads" },
   ];
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await fetch("/api/auth/whoami");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (mounted && data?.user) setUser({ id: data.user.id, name: data.user.name });
+      } catch (e) {
+        // ignore
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  async function handleLogout() {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      window.location.href = "/";
+    } catch (e) {
+      window.location.href = "/";
+    }
+  }
 
   return (
     <AnimatePresence>
@@ -48,6 +76,14 @@ export default function Header() {
             <Button asLink href="/leads" size="sm">
               Comece grátis
             </Button>
+            {user ? (
+              <div className="flex items-center gap-4">
+                <span className="text-sm">Olá, {user.name}</span>
+                <button className="text-sm text-red-500" onClick={handleLogout}>
+                  Sair
+                </button>
+              </div>
+            ) : null}
           </nav>
 
           {/* Botão Mobile */}

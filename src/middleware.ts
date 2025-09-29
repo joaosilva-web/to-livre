@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUserFromCookie } from "./libs/auth";
+import { getUserFromCookie } from "./app/libs/auth";
 
 export function middleware(req: NextRequest) {
   // Protege qualquer rota que comece com /dashboard ou /app/protected

@@ -3,9 +3,11 @@
 
 import { Badge } from "@radix-ui/themes";
 
+import { UIAppointment } from "@/lib/appointments";
+
 interface Props {
-  appointments: any[];
-  onEdit: (appointment: any) => void;
+  appointments: UIAppointment[];
+  onEdit: (appointment: UIAppointment) => void;
   refresh: () => void;
 }
 

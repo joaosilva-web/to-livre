@@ -1,7 +1,8 @@
 // app/libs/auth.ts
 import { cookies } from "next/headers";
+import jwt from "jsonwebtoken";
 
-const EXPIRES_IN = 60 * 60 * 24; // 1 dia em segundos
+const EXPIRES_IN = "1d"; // 1 dia
 
 export type Role = "OWNER" | "MANAGER" | "EMPLOYEE";
 
@@ -13,27 +14,28 @@ export interface JWTPayload {
   companyId?: string | null;
 }
 
-// Função simples de "assinatura" de token (base64)
-export function signToken(payload: JWTPayload) {
-  const tokenPayload = JSON.stringify({
-    ...payload,
-    exp: Date.now() + EXPIRES_IN * 1000,
-  });
-  return Buffer.from(tokenPayload).toString("base64");
+if (!process.env.JWT_SECRET) {
+  console.warn("JWT_SECRET is not set. Set it in your environment for secure tokens.");
 }
 
-// Função de verificação do token
+export function signToken(payload: JWTPayload) {
+  // If JWT_SECRET is missing, jwt.sign will still create a token when given an empty string,
+  // but this is insecure. We deliberately allow it so dev environments without env var keep working,
+  // while warning above notifies the developer.
+  const secret = process.env.JWT_SECRET || "";
+  return jwt.sign(payload as object, secret, { expiresIn: EXPIRES_IN });
+}
+
 export function verifyToken(token: string): JWTPayload | null {
   try {
-    const decoded = JSON.parse(Buffer.from(token, "base64").toString("utf-8"));
-    if (decoded.exp < Date.now()) return null;
-    return decoded as JWTPayload;
+    const secret = process.env.JWT_SECRET || "";
+    const decoded = jwt.verify(token, secret) as JWTPayload;
+    return decoded;
   } catch {
     return null;
   }
 }
 
-// Pegar usuário do cookie (server)
 export async function getUserFromCookie(): Promise<JWTPayload | null> {
   const cookieStore = cookies();
   const token = (await cookieStore).get("token")?.value;

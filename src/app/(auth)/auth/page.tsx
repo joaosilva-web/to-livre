@@ -3,7 +3,7 @@
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useScrollMotion } from "@/hooks/useScrollMotion";
 import { AnimatePresence, motion } from "framer-motion";
 import { bounceIn, bounceOut } from "@/animations/motionVariants";
@@ -11,6 +11,7 @@ import { useReward } from "react-rewards";
 import Input from "@/app/components/ui/Input";
 import Button from "@/app/components/ui/Button";
 import Modal from "@/app/components/ui/Modal";
+import ReCAPTCHA from "react-google-recaptcha";
 
 const registerSchema = z
   .object({
@@ -44,6 +45,7 @@ export default function AuthPage() {
 
   const loginForm = useScrollMotion();
   const registerForm = useScrollMotion();
+  const recaptchaRef = useRef<ReCAPTCHA | null>(null);
 
   const {
     register,
@@ -63,10 +65,20 @@ export default function AuthPage() {
 
   const onRegister = async (data: RegisterFormData) => {
     try {
+      // If site key provided, get recaptcha token
+      const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+      let recaptchaToken: string | null | undefined;
+      if (siteKey && recaptchaRef.current) {
+        recaptchaToken = await recaptchaRef.current.executeAsync();
+        // executeAsync can return null in some error cases
+        if (recaptchaToken === null) recaptchaToken = undefined;
+        recaptchaRef.current.reset();
+      }
+
       const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, recaptchaToken }),
       });
 
       if (!res.ok) {
@@ -107,7 +119,7 @@ export default function AuthPage() {
     if (success) {
       confettiReward();
     }
-  }, [success]);
+  }, [success, confettiReward]);
 
   return (
     <section
@@ -115,7 +127,7 @@ export default function AuthPage() {
       style={{ backgroundImage: "url('/calendar.png')" }}
     >
       <div className="w-[50%] h-screen flex flex-col justify-center items-center max-w-full">
-        <h1 className="text-6xl text-center font-bold">
+        <h1 className="text-6xl text-center font-bold text-white">
           Organize, automatize e viva com mais leveza.
         </h1>
         <p className="text-white text-center text-xl font-medium max-w-lg">
@@ -184,6 +196,14 @@ export default function AuthPage() {
               onSubmit={handleRegisterSubmit(onRegister)}
               className="bg-white p-8 rounded-2xl shadow max-w-md w-full space-y-4 pb-6"
             >
+              {/* ReCAPTCHA: only rendered if site key exists */}
+              {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
+                <ReCAPTCHA
+                  sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
+                  size="invisible"
+                  ref={recaptchaRef}
+                />
+              )}
               <h1 className="text-2xl font-bold text-center text-primary">
                 Crie sua conta
               </h1>

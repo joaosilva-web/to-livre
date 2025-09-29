@@ -1,17 +1,17 @@
 "use client";
 
-import { ButtonHTMLAttributes, AnchorHTMLAttributes } from "react";
+import { ButtonHTMLAttributes, AnchorHTMLAttributes, ReactNode } from "react";
 
-// Tipos possíveis de botão ou link
 type CommonProps = {
-  variant?: "primary" | "secondary" | "outlined";
+  variant?: "primary" | "secondary" | "outlined" | "destructive";
   asLink?: boolean;
   mt?: "none" | "xs" | "sm" | "md" | "lg" | "xlg";
   size?: "xs" | "sm" | "md" | "lg" | "xlg";
   w?: "auto" | "full";
+  loading?: boolean;
+  children: ReactNode;
 };
 
-// União de tipos com base na tag
 type ButtonProps =
   | (CommonProps & ButtonHTMLAttributes<HTMLButtonElement>)
   | (CommonProps & AnchorHTMLAttributes<HTMLAnchorElement>);
@@ -23,15 +23,17 @@ export default function Button({
   mt = "none",
   size = "md",
   w = "auto",
+  loading = false,
   ...props
 }: ButtonProps) {
   const baseClass =
-    "rounded font-semibold hover:scale-105 cursor-pointer transition";
+    "rounded font-semibold hover:scale-105 cursor-pointer transition flex items-center justify-center gap-2";
 
   const variants = {
     primary: "bg-primary text-white hover:bg-primary-hover",
     secondary: "text-primary",
     outlined: "text-primary border hover:bg-secondary-hover",
+    destructive: "bg-red-500 text-white hover:bg-red-600",
   };
 
   const marginTopMap = {
@@ -56,32 +58,56 @@ export default function Button({
     full: "w-full",
   };
 
-  const className = `${baseClass} ${variants[variant]} ${marginTopMap[mt]} ${sizeMap[size]} ${widthMap[w]}`;
+  const className = `${baseClass} ${variants[variant]} ${marginTopMap[mt]} ${
+    sizeMap[size]
+  } ${widthMap[w]} ${loading ? "opacity-70 cursor-not-allowed" : ""}`;
+
+  const Spinner = () => (
+    <svg
+      className="animate-spin h-5 w-5 text-white"
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      ></circle>
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+      ></path>
+    </svg>
+  );
+
+  const content = loading ? <Spinner /> : children;
 
   if (asLink) {
     return (
-      <div className="flex flex-col sm:flex-row justify-center">
-        <a
-          className={className}
-          {...(props as AnchorHTMLAttributes<HTMLAnchorElement>)}
-        >
-          {children}
-        </a>
-      </div>
+      <a
+        className={className}
+        {...(props as AnchorHTMLAttributes<HTMLAnchorElement>)}
+      >
+        {content}
+      </a>
     );
   }
 
   return (
-    <div className="flex flex-col sm:flex-row justify-center">
-      <button
-        className={className}
-        type={
-          (props as ButtonHTMLAttributes<HTMLButtonElement>).type || "button"
-        }
-        {...(props as ButtonHTMLAttributes<HTMLButtonElement>)}
-      >
-        {children}
-      </button>
-    </div>
+    <button
+      className={className}
+      type={(props as ButtonHTMLAttributes<HTMLButtonElement>).type || "button"}
+      disabled={
+        loading || (props as ButtonHTMLAttributes<HTMLButtonElement>).disabled
+      }
+      {...(props as ButtonHTMLAttributes<HTMLButtonElement>)}
+    >
+      {content}
+    </button>
   );
 }

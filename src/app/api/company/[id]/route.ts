@@ -1,9 +1,9 @@
 // app/api/company/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient, Company } from "@/generated/prisma";
+import { Company } from "@/generated/prisma";
 import { getUserFromCookie, JWTPayload } from "@/app/libs/auth";
 
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 interface CompanyParams {
   id: string;

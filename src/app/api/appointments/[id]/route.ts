@@ -1,97 +1,165 @@
-// app/api/appointments/[id]/route.ts
+// app/api/appointments/route.ts (Next.js app router style)
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@/generated/prisma";
-import { getUserFromCookie } from "@/app/libs/auth";
-import { z } from "zod";
+import { z, ZodError } from "zod";
+import prisma from "@/lib/prisma";
 
-const prisma = new PrismaClient();
+// Tipagem ApiResponse
+interface ApiResponse<T = unknown> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  errorDetails?: { path?: string; message: string }[];
+}
 
-const updateAppointmentSchema = z.object({
-  clientName: z.string().optional(),
-  service: z.string().optional(),
-  price: z.number().optional(),
-  date: z.string().optional(),
-  status: z.enum(["PENDING", "CONFIRMED", "COMPLETED", "CANCELED"]).optional(),
+// Request validation
+const createAppointmentSchema = z.object({
+  companyId: z.string().min(1),
+  professionalId: z.string().min(1),
+  clientName: z.string().min(1),
+  serviceId: z.string().min(1),
+  startTime: z.string().refine((s) => !Number.isNaN(Date.parse(s)), {
+    message: "startTime deve ser uma ISO date válida",
+  }),
 });
 
-interface AppointmentParams {
-  id: string;
+function timeToMinutes(hhmm: string) {
+  const [hh, mm] = hhmm.split(":").map(Number);
+  return hh * 60 + mm;
 }
 
-// PUT → atualizar agendamento
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function PUT(req: NextRequest, context: any) {
-  const { params } = context as { params: AppointmentParams };
-  const user = await getUserFromCookie();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+function getDayOfWeekUTC(date: Date) {
+  return date.getUTCDay(); // 0..6
+}
 
+// Simple hash to two 32-bit ints for advisory lock
+function hashToTwoInts(key: string): [number, number] {
+  let h = 5381;
+  for (let i = 0; i < key.length; i++) h = (h * 33) ^ key.charCodeAt(i);
+  // return two 32-bit parts
+  const a = h >>> 0;
+  const b = ~h >>> 0;
+  return [a, b];
+}
+
+export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const data = updateAppointmentSchema.parse(body);
+    const parsed = createAppointmentSchema.parse(body);
+    const start = new Date(parsed.startTime);
+    const companyId = parsed.companyId;
+    const professionalId = parsed.professionalId;
+    const serviceId = parsed.serviceId;
 
-    const appointment = await prisma.appointment.updateMany({
-      where: {
-        id: params.id,
-        professionalId: user.id, // só pode atualizar se for o dono
-      },
-      data: {
-        ...data,
-        date: data.date ? new Date(data.date) : undefined,
-      },
+    // fetch service and its duration (and ensure it belongs to company)
+    const service = await prisma.service.findUnique({
+      where: { id: serviceId },
+      select: { id: true, duration: true, companyId: true, name: true },
     });
-
-    if (appointment.count === 0) {
-      return NextResponse.json(
-        { error: "Agendamento não encontrado ou não autorizado" },
-        { status: 404 }
+    if (!service || service.companyId !== companyId) {
+      return NextResponse.json<ApiResponse>(
+        {
+          success: false,
+          error: "Serviço não encontrado ou não pertence à empresa",
+        },
+        { status: 400 }
       );
     }
 
-    return NextResponse.json({ message: "Agendamento atualizado" });
-  } catch (error: any) {
-    console.error(error);
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors }, { status: 400 });
-    }
-    return NextResponse.json(
-      { error: "Erro ao atualizar agendamento" },
-      { status: 500 }
-    );
-  }
-}
+    // compute endTime
+    const end = new Date(start.getTime() + service.duration * 60_000);
 
-// DELETE → cancelar agendamento
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function DELETE(req: NextRequest, context: any) {
-  const { params } = context as { params: AppointmentParams };
-  const user = await getUserFromCookie();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  try {
-    const appointment = await prisma.appointment.updateMany({
-      where: {
-        id: params.id,
-        professionalId: user.id,
-      },
-      data: { status: "CANCELED" },
+    // working hours for that company and day
+    const day = getDayOfWeekUTC(start);
+    const wh = await prisma.workingHours.findFirst({
+      where: { companyId, dayOfWeek: day },
     });
-
-    if (appointment.count === 0) {
-      return NextResponse.json(
-        { error: "Agendamento não encontrado ou não autorizado" },
-        { status: 404 }
+    if (!wh) {
+      return NextResponse.json<ApiResponse>(
+        {
+          success: false,
+          error: "Horário de funcionamento não configurado para esse dia",
+        },
+        { status: 400 }
       );
     }
 
-    return NextResponse.json({ message: "Agendamento cancelado" });
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json(
-      { error: "Erro ao cancelar agendamento" },
+    // convert start/end to minutes (UTC time-of-day)
+    const startMinutes = start.getUTCHours() * 60 + start.getUTCMinutes();
+    const endMinutes = end.getUTCHours() * 60 + end.getUTCMinutes();
+    const openMinutes = timeToMinutes(wh.openTime);
+    const closeMinutes = timeToMinutes(wh.closeTime);
+
+    if (startMinutes < openMinutes || endMinutes > closeMinutes) {
+      return NextResponse.json<ApiResponse>(
+        {
+          success: false,
+          error: "Agendamento fora do horário de funcionamento",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Use advisory lock per professional to avoid race conditions in concurrent requests
+    const [lock1, lock2] = hashToTwoInts(professionalId);
+
+    const created = await prisma.$transaction(async (tx) => {
+      // acquire pg advisory lock for this professional (transactional)
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lock1}, ${lock2})`;
+
+      // check overlaps: any appointment for same professional where NOT (existing.end <= new.start OR existing.start >= new.end)
+      const overlapCount = await tx.appointment.count({
+        where: {
+          professionalId,
+          AND: [{ startTime: { lt: end } }, { endTime: { gt: start } }],
+          // optionally consider status only for PENDING/CONFIRMED etc.
+        },
+      });
+
+      if (overlapCount > 0) {
+        throw new Error(
+          "Já existe agendamento conflitando para esse profissional nesse horário"
+        );
+      }
+
+      // create appointment (calculate price? could copy service.price)
+      const appt = await tx.appointment.create({
+        data: {
+          companyId,
+          professionalId,
+          clientName: parsed.clientName,
+          serviceId,
+          price: undefined, // optionally copy service price
+          startTime: start,
+          endTime: end,
+        },
+      });
+
+      return appt;
+    });
+
+    return NextResponse.json<ApiResponse>({ success: true, data: created });
+  } catch (err) {
+    if (err instanceof ZodError) {
+      const errorDetails = err.issues.map((issue) => ({
+        path: issue.path.join("."),
+        message: issue.message,
+      }));
+      return NextResponse.json<ApiResponse>(
+        {
+          success: false,
+          error: "Erro de validação",
+          errorDetails,
+        },
+        { status: 400 }
+      );
+    }
+
+    const error = err as Error;
+    return NextResponse.json<ApiResponse>(
+      {
+        success: false,
+        error: error.message || "Erro ao criar agendamento",
+      },
       { status: 500 }
     );
   }

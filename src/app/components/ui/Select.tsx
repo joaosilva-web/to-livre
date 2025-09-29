@@ -14,7 +14,11 @@ type SelectProps = CommonProps & {
   options: { label: string; value: string }[];
   placeholder?: string;
   defaultValue?: string;
+  value?: string;
+  // onValueChange is kept for existing usage; onChange is an alias used across the codebase
   onValueChange?: (value: string) => void;
+  onChange?: (value: string) => void;
+  disabled?: boolean;
 };
 
 export default function Select({
@@ -26,6 +30,9 @@ export default function Select({
   w = "auto",
   defaultValue,
   onValueChange,
+  value,
+  onChange,
+  disabled,
 }: SelectProps) {
   const baseClass =
     "flex items-center justify-between rounded font-medium transition cursor-pointer";
@@ -63,9 +70,10 @@ export default function Select({
   return (
     <SelectPrimitive.Root
       defaultValue={defaultValue}
-      onValueChange={onValueChange}
+      value={value}
+      onValueChange={onValueChange ?? onChange}
     >
-      <SelectPrimitive.Trigger className={className}>
+      <SelectPrimitive.Trigger className={className} disabled={disabled}>
         <SelectPrimitive.Value placeholder={placeholder} />
         <SelectPrimitive.Icon>
           <ChevronDown className="w-4 h-4" />
