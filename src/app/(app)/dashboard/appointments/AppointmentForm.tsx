@@ -6,8 +6,13 @@ import "react-calendar/dist/Calendar.css";
 import Button from "@/app/components/ui/Button";
 import Input from "@/app/components/ui/Input";
 import { z } from "zod";
-import { AppointmentStatus, Appointment as PrismaAppointment } from "@/generated/prisma";
-import prismaToUI, { UIAppointment as HelperUIAppointment } from "@/lib/appointments";
+import {
+  AppointmentStatus,
+  Appointment as PrismaAppointment,
+} from "@/generated/prisma";
+import prismaToUI, {
+  UIAppointment as HelperUIAppointment,
+} from "@/lib/appointments";
 
 import {
   Chart as ChartJS,
@@ -73,10 +78,16 @@ export default function AppointmentForm({ appointment, onClose }: Props) {
 
     // runtime type guard: detect Prisma shape (has startTime)
     const isPrisma = (a: unknown): a is PrismaAppointment => {
-      return !!a && typeof a === "object" && "startTime" in (a as Record<string, unknown>);
+      return (
+        !!a &&
+        typeof a === "object" &&
+        "startTime" in (a as Record<string, unknown>)
+      );
     };
 
-    const ui = isPrisma(appointment) ? prismaToUI(appointment) ?? appointment : appointment;
+    const ui = isPrisma(appointment)
+      ? prismaToUI(appointment) ?? appointment
+      : appointment;
 
     const safeDate = ui.date ? new Date(ui.date) : new Date();
 
@@ -101,7 +112,7 @@ export default function AppointmentForm({ appointment, onClose }: Props) {
       const from = selectedDate.toISOString().split("T")[0];
       const to = from;
       const res = await fetch(`/api/appointments?from=${from}&to=${to}`);
-  const data: UIAppointment[] = await res.json();
+      const data: UIAppointment[] = await res.json();
 
       const slots: AvailableSlot[] = Array.from({ length: 10 }, (_, i) => {
         const hour = 9 + i;
@@ -263,7 +274,8 @@ export default function AppointmentForm({ appointment, onClose }: Props) {
               // react-calendar's onChange can be Date or Date[] (range). Normalize safely.
               onChange={(value: Date | Date[] | unknown) => {
                 if (value instanceof Date) setSelectedDate(value);
-                else if (Array.isArray(value) && value[0] instanceof Date) setSelectedDate(value[0]);
+                else if (Array.isArray(value) && value[0] instanceof Date)
+                  setSelectedDate(value[0]);
               }}
               value={selectedDate}
               className="rounded-lg shadow-sm"

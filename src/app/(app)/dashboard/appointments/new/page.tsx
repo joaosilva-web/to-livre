@@ -9,7 +9,7 @@ import Input from "@/app/components/ui/Input";
 import Select from "@/app/components/ui/Select";
 import { z } from "zod";
 import { Appointment as PrismaAppointment } from "@/generated/prisma";
-import prismaToUI from '@/lib/appointments';
+import prismaToUI from "@/lib/appointments";
 
 import {
   Chart as ChartJS,
@@ -58,18 +58,12 @@ function Skeleton({ className }: { className: string }) {
   );
 }
 
-// Função para extrair payload do JWT
-function parseJwt(token: string) {
-  try {
-    return JSON.parse(atob(token.split(".")[1]));
-  } catch {
-    return null;
-  }
-}
+// ...existing code...
 
 export default function NewAppointmentPage() {
   const router = useRouter();
   const [companyId, setCompanyId] = useState<string | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [services, setServices] = useState<Service[]>([]);
@@ -87,20 +81,51 @@ export default function NewAppointmentPage() {
   const [loadingServices, setLoadingServices] = useState(false);
   const [loadingSlots, setLoadingSlots] = useState(false);
 
-  // Pega companyId do JWT
+  // Pega companyId por meio do endpoint /api/auth/whoami (cookie-based JWT)
   useEffect(() => {
-    const token = localStorage.getItem("token"); // ou do cookie
-    if (!token) return;
-    const payload = parseJwt(token);
-    if (!payload?.companyId)
-      return console.error("CompanyId não encontrado no JWT");
-    setCompanyId(payload.companyId);
+    const fetchWhoami = async () => {
+      try {
+        const res = await fetch("/api/auth/whoami");
+        if (!res.ok) {
+          setAuthError("Não autenticado. Faça login para continuar.");
+          return console.warn("whoami returned not ok");
+        }
+        const body = await res.json();
+        if (body?.user?.companyId) {
+          setCompanyId(body.user.companyId);
+          setAuthError(null);
+        } else {
+          setAuthError("Conta sem empresa vinculada ou sessão inválida.");
+        }
+      } catch (err) {
+        console.error("Erro ao chamar whoami:", err);
+        setAuthError("Erro ao verificar autenticação. Tente novamente.");
+      }
+    };
+
+    fetchWhoami();
   }, []);
+
+  // Redirect to auth page if we detected an auth error
+  useEffect(() => {
+    if (authError) {
+      // redirect to auth page with next param so user can return after login
+      try {
+        const currentPath =
+          typeof window !== "undefined" ? window.location.pathname : "/";
+        router.push(`/auth?next=${encodeURIComponent(currentPath)}`);
+      } catch {
+        router.push("/auth");
+      }
+    }
+  }, [authError, router]);
 
   // Fetch serviços
   useEffect(() => {
     console.log("Fetching services, companyId:", companyId);
     if (!companyId) return;
+    // If we have an auth error, skip fetching services
+    if (authError) return;
     console.log("companyId is null, skipping fetch");
     setLoadingServices(true);
     fetch(`/api/services?companyId=${companyId}`)
@@ -114,7 +139,7 @@ export default function NewAppointmentPage() {
         setServices([]);
       })
       .finally(() => setLoadingServices(false));
-  }, [companyId]);
+  }, [companyId, authError]);
 
   // Fetch appointments e gera slots
   useEffect(() => {
@@ -150,7 +175,7 @@ export default function NewAppointmentPage() {
       // Gera slots
       const slots: AvailableSlot[] = [];
 
-          workingHours.forEach((wh) => {
+      workingHours.forEach((wh) => {
         const [startHour, startMinute] = wh.start.split(":").map(Number);
         const [endHour, endMinute] = wh.end.split(":").map(Number);
 
@@ -162,15 +187,23 @@ export default function NewAppointmentPage() {
 
         const current = new Date(start);
 
-        while (current.getTime() + selectedService.duration * 60_000 <= end.getTime()) {
+        while (
+          current.getTime() + selectedService.duration * 60_000 <=
+          end.getTime()
+        ) {
           const timeStr = current.toTimeString().slice(0, 5);
           const isOccupied = data.some((appt) => {
             // `data` items are UI-normalized (have `date` and derived duration)
             const apptStart = new Date(appt.date);
             const apptEnd = new Date(appt.date);
-            apptEnd.setMinutes(apptEnd.getMinutes() + (services.find((s) => s.id === appt.serviceId)?.duration ?? selectedService.duration));
+            apptEnd.setMinutes(
+              apptEnd.getMinutes() +
+                (services.find((s) => s.id === appt.serviceId)?.duration ??
+                  selectedService.duration)
+            );
             return !(
-              current.getTime() + selectedService.duration * 60_000 <= apptStart.getTime() || current.getTime() >= apptEnd.getTime()
+              current.getTime() + selectedService.duration * 60_000 <=
+                apptStart.getTime() || current.getTime() >= apptEnd.getTime()
             );
           });
           slots.push({ time: timeStr, available: !isOccupied });
