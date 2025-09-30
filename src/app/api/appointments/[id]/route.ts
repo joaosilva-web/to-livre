@@ -35,9 +35,9 @@ function getDayOfWeekUTC(date: Date) {
 function hashToTwoInts(key: string): [number, number] {
   let h = 5381;
   for (let i = 0; i < key.length; i++) h = (h * 33) ^ key.charCodeAt(i);
-  // return two 32-bit parts
-  const a = h >>> 0;
-  const b = ~h >>> 0;
+  // convert to signed 32-bit integers to match Postgres `int` parameters
+  const a = h | 0;
+  const b = ~h | 0;
   return [a, b];
 }
 
@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
 
     const created = await prisma.$transaction(async (tx) => {
       // acquire pg advisory lock for this professional (transactional)
-      await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lock1}, ${lock2})`;
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lock1}::int, ${lock2}::int)`;
 
       // check overlaps: any appointment for same professional where NOT (existing.end <= new.start OR existing.start >= new.end)
       const overlapCount = await tx.appointment.count({
