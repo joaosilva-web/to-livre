@@ -40,7 +40,8 @@ export function prismaToUI(
     service: String(service),
     serviceId: appt.serviceId,
     price: appt.price ?? 0,
-    date: start.toISOString().slice(0, 16),
+    // keep full ISO timestamp (with timezone) so client comparisons are accurate
+    date: start.toISOString(),
     status: appt.status,
   };
 }

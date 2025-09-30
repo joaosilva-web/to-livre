@@ -9,7 +9,7 @@ import Input from "@/app/components/ui/Input";
 import Select from "@/app/components/ui/Select";
 import { z } from "zod";
 import { Appointment as PrismaAppointment } from "@/generated/prisma";
-import prismaToUI from "@/lib/appointments";
+import prismaToUI, { UIAppointment } from "@/lib/appointments";
 
 import {
   Chart as ChartJS,
@@ -67,10 +67,14 @@ export default function NewAppointmentPage() {
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [services, setServices] = useState<Service[]>([]);
+  const [professionals, setProfessionals] = useState<
+    { id: string; name: string }[]
+  >([]);
   // local appointments are fetched and normalized below; no persistent state needed
   const [form, setForm] = useState({
     clientName: "",
     serviceId: "",
+    professionalId: "",
     startTime: "",
   });
 
@@ -80,6 +84,12 @@ export default function NewAppointmentPage() {
 
   const [loadingServices, setLoadingServices] = useState(false);
   const [loadingSlots, setLoadingSlots] = useState(false);
+  const [servicesError, setServicesError] = useState<string | null>(null);
+  const [professionalsError, setProfessionalsError] = useState<string | null>(
+    null
+  );
+  const [slotsError, setSlotsError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Pega companyId por meio do endpoint /api/auth/whoami (cookie-based JWT)
   useEffect(() => {
@@ -122,24 +132,72 @@ export default function NewAppointmentPage() {
 
   // Fetch serviços
   useEffect(() => {
-    console.log("Fetching services, companyId:", companyId);
     if (!companyId) return;
     // If we have an auth error, skip fetching services
     if (authError) return;
-    console.log("companyId is null, skipping fetch");
+    setServicesError(null);
     setLoadingServices(true);
     fetch(`/api/services?companyId=${companyId}`)
-      .then((res) => res.json())
+      .then(async (res) => {
+        const body = await res.json().catch(() => null);
+        if (!res.ok) {
+          const msg =
+            body?.error || res.statusText || "Erro ao buscar serviços";
+          throw new Error(msg);
+        }
+        return body ?? [];
+      })
       .then((resData) => {
-        if (Array.isArray(resData.data)) setServices(resData.data);
-        else setServices([]);
+        // API may return either a raw array or an ApiResponse with `.data`
+        const list = Array.isArray(resData)
+          ? resData
+          : Array.isArray(resData?.data)
+          ? resData.data
+          : [];
+        setServices(list);
       })
       .catch((err) => {
         console.error("Erro ao buscar serviços:", err);
         setServices([]);
+        setServicesError(String(err?.message ?? err));
       })
       .finally(() => setLoadingServices(false));
   }, [companyId, authError]);
+
+  // Fetch professionals for the company so we can attach a professionalId to the appointment
+  useEffect(() => {
+    if (!companyId) return;
+    setProfessionalsError(null);
+    fetch(`/api/company/${companyId}/professionals`)
+      .then(async (res) => {
+        const body = await res.json().catch(() => null);
+        if (!res.ok) {
+          const msg =
+            body?.error || res.statusText || "Erro ao buscar profissionais";
+          throw new Error(msg);
+        }
+        return body ?? { data: [] };
+      })
+      .then((resData) => {
+        const list = Array.isArray(resData)
+          ? resData
+          : Array.isArray(resData?.data)
+          ? resData.data
+          : [];
+        setProfessionals(list);
+        // set default professionalId if none selected, but avoid reading `form` from closure
+        if (list.length > 0) {
+          setForm((prev) =>
+            prev.professionalId ? prev : { ...prev, professionalId: list[0].id }
+          );
+        }
+      })
+      .catch((err) => {
+        console.error("Erro ao buscar profissionais:", err);
+        setProfessionals([]);
+        setProfessionalsError(String(err?.message ?? err));
+      });
+  }, [companyId]);
 
   // Fetch appointments e gera slots
   useEffect(() => {
@@ -148,71 +206,71 @@ export default function NewAppointmentPage() {
     const selectedService = services.find((s) => s.id === form.serviceId);
     if (!selectedService) return;
 
+    setSlotsError(null);
     setLoadingSlots(true);
 
     const fetchSlots = async () => {
       const dateStr = selectedDate.toISOString().split("T")[0];
 
       // Horários de funcionamento
+      // the API is exposed at /api/working-hours?companyId=... (not under /api/companies/...)
       const resHours = await fetch(
-        `/api/companies/${companyId}/working-hours?date=${dateStr}`
+        `/api/working-hours?companyId=${companyId}&date=${dateStr}`
       );
-      const workingHours: { start: string; end: string }[] =
-        await resHours.json();
+      const resHoursJson = await resHours.json();
+      type WorkingHour = {
+        dayOfWeek: number;
+        openTime: string;
+        closeTime: string;
+      };
+      const workingHours: WorkingHour[] = Array.isArray(resHoursJson)
+        ? resHoursJson
+        : Array.isArray(resHoursJson?.data)
+        ? resHoursJson.data
+        : [];
 
       // Agendamentos existentes
       const resAppointments = await fetch(
         `/api/appointments?companyId=${companyId}&from=${dateStr}&to=${dateStr}`
       );
-      const raw = await resAppointments.json();
-      // normalize server appointments to UI-friendly shape
-      const data = Array.isArray(raw)
-        ? (raw as PrismaAppointment[])
-            .map((r) => prismaToUI(r))
-            .filter((x): x is NonNullable<typeof x> => Boolean(x))
+      const resAppointmentsJson = await resAppointments.json();
+      const rawArray: PrismaAppointment[] = Array.isArray(resAppointmentsJson)
+        ? resAppointmentsJson
+        : Array.isArray(resAppointmentsJson?.data)
+        ? resAppointmentsJson.data
         : [];
 
-      // Gera slots
-      const slots: AvailableSlot[] = [];
+      // normalize server appointments to UI-friendly shape
+      const data = rawArray
+        .map((r) => prismaToUI(r))
+        .filter((x): x is NonNullable<typeof x> => Boolean(x));
 
-      workingHours.forEach((wh) => {
-        const [startHour, startMinute] = wh.start.split(":").map(Number);
-        const [endHour, endMinute] = wh.end.split(":").map(Number);
+      // Use shared slot generation util to compute availability
+      try {
+        const { default: generateSlots } = await import("@/lib/slotGeneration");
+        // Note: generateSlots currently uses the provided durationMinutes for appt overlap checks
+        // build a map serviceId -> duration from services state
+        const serviceDurationMap: Record<string, number> = Object.fromEntries(
+          services.map((s) => [s.id, s.duration])
+        );
+        const debug = process.env.NODE_ENV === "development";
 
-        const start = new Date(selectedDate);
-        start.setHours(startHour, startMinute, 0, 0);
-
-        const end = new Date(selectedDate);
-        end.setHours(endHour, endMinute, 0, 0);
-
-        const current = new Date(start);
-
-        while (
-          current.getTime() + selectedService.duration * 60_000 <=
-          end.getTime()
-        ) {
-          const timeStr = current.toTimeString().slice(0, 5);
-          const isOccupied = data.some((appt) => {
-            // `data` items are UI-normalized (have `date` and derived duration)
-            const apptStart = new Date(appt.date);
-            const apptEnd = new Date(appt.date);
-            apptEnd.setMinutes(
-              apptEnd.getMinutes() +
-                (services.find((s) => s.id === appt.serviceId)?.duration ??
-                  selectedService.duration)
-            );
-            return !(
-              current.getTime() + selectedService.duration * 60_000 <=
-                apptStart.getTime() || current.getTime() >= apptEnd.getTime()
-            );
-          });
-          slots.push({ time: timeStr, available: !isOccupied });
-          current.setMinutes(current.getMinutes() + selectedService.duration);
-        }
-      });
-
-      setAvailableSlots(slots);
-      setLoadingSlots(false);
+        const slots = generateSlots(
+          selectedDate,
+          workingHours,
+          selectedService.duration,
+          data as unknown as UIAppointment[],
+          serviceDurationMap,
+          debug
+        );
+        setAvailableSlots(slots);
+      } catch (err) {
+        console.error("Erro ao gerar slots:", err);
+        setSlotsError(String(err ?? "Erro ao gerar slots"));
+        setAvailableSlots([]);
+      } finally {
+        setLoadingSlots(false);
+      }
     };
 
     fetchSlots();
@@ -236,16 +294,31 @@ export default function NewAppointmentPage() {
       appointmentSchema.parse(form);
       if (!companyId) throw new Error("CompanyId não encontrado");
 
-      await fetch("/api/appointments", {
+      const professionalId = form.professionalId || professionals[0]?.id;
+      if (!professionalId) throw new Error("professionalId não informado");
+
+      setSubmitError(null);
+      const res = await fetch("/api/appointments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, companyId }),
+        body: JSON.stringify({ ...form, professionalId, companyId }),
       });
+
+      const body = await res.json().catch(() => null);
+      if (!res.ok) {
+        const msg =
+          body?.error ||
+          body?.message ||
+          res.statusText ||
+          "Erro ao criar agendamento";
+        setSubmitError(String(msg));
+        throw new Error(msg);
+      }
 
       router.push("/dashboard/appointments");
     } catch (err) {
       console.error(err);
-      alert("Erro ao criar agendamento");
+      alert("Erro ao criar agendamento: " + String(err));
     }
   };
 
@@ -276,13 +349,32 @@ export default function NewAppointmentPage() {
 
       {step === 2 && selectedDate && (
         <div className="w-full max-w-2xl flex flex-col items-center gap-4">
-          <Select
-            placeholder="Selecione um serviço"
-            value={form.serviceId}
-            onChange={(value) => setForm({ ...form, serviceId: value })}
-            options={services.map((s) => ({ label: s.name, value: s.id }))}
-            disabled={loadingServices}
-          />
+          <div className="flex flex-row gap-2">
+            <Select
+              placeholder="Selecione um serviço"
+              value={form.serviceId}
+              onChange={(value) => setForm({ ...form, serviceId: value })}
+              options={services.map((s) => ({ label: s.name, value: s.id }))}
+              disabled={loadingServices}
+            />
+            {servicesError && (
+              <p className="text-red-500 text-sm mt-1">{servicesError}</p>
+            )}
+
+            <Select
+              placeholder="Selecione um profissional"
+              value={form.professionalId}
+              onChange={(value) => setForm({ ...form, professionalId: value })}
+              options={professionals.map((p) => ({
+                label: p.name,
+                value: p.id,
+              }))}
+              disabled={professionals.length === 0}
+            />
+            {professionalsError && (
+              <p className="text-red-500 text-sm mt-1">{professionalsError}</p>
+            )}
+          </div>
 
           {form.serviceId ? (
             loadingSlots ? (
@@ -340,6 +432,9 @@ export default function NewAppointmentPage() {
               Selecione um serviço para ver os horários disponíveis.
             </p>
           )}
+          {slotsError && (
+            <p className="text-red-500 text-sm mt-2">{slotsError}</p>
+          )}
 
           <div className="flex justify-center mt-1 gap-2">
             <Button onClick={() => setStep(1)} variant="outlined" size="sm">
@@ -383,6 +478,11 @@ export default function NewAppointmentPage() {
             <Button onClick={() => setStep(2)} type="button" variant="outlined">
               Voltar
             </Button>
+            {submitError && (
+              <p className="text-red-600 text-sm mr-2 self-center">
+                {submitError}
+              </p>
+            )}
             <Button
               type="submit"
               disabled={isSaveDisabled}

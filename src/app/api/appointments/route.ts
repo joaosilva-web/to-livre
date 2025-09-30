@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z, ZodError } from "zod";
 import prisma from "@/lib/prisma";
+import { buildAppointmentWhere } from "@/lib/appointmentsRange";
 
 // Tipagem ApiResponse
 interface ApiResponse<T = unknown> {
@@ -51,8 +52,9 @@ function getDayOfWeekUTC(date: Date) {
 function hashToTwoInts(key: string): [number, number] {
   let h = 5381;
   for (let i = 0; i < key.length; i++) h = (h * 33) ^ key.charCodeAt(i);
-  const a = h >>> 0;
-  const b = ~h >>> 0;
+  // convert to signed 32-bit integers to match Postgres `int` parameters
+  const a = h | 0;
+  const b = ~h | 0;
   return [a, b];
 }
 
@@ -113,7 +115,7 @@ export async function POST(req: NextRequest) {
     const [lock1, lock2] = hashToTwoInts(parsed.professionalId);
 
     const created = await prisma.$transaction(async (tx) => {
-      await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lock1}, ${lock2})`;
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lock1}::int, ${lock2}::int)`;
 
       const overlapCount = await tx.appointment.count({
         where: {
@@ -180,11 +182,14 @@ export async function GET(req: NextRequest) {
         { status: 400 }
       );
 
-    const where: any = { companyId };
+    let where: Record<string, unknown>;
+    if (from || to) {
+      // use single source-of-truth util to build the where clause
+      where = buildAppointmentWhere(companyId, from ?? "", to ?? "");
+    } else {
+      where = { companyId };
+    }
     if (professionalId) where.professionalId = professionalId;
-    if (from || to) where.startTime = {};
-    if (from) where.startTime.gte = new Date(from);
-    if (to) where.startTime.lte = new Date(to);
 
     const appointments = await prisma.appointment.findMany({
       where,
@@ -251,7 +256,7 @@ export async function PUT(req: NextRequest) {
     const [lock1, lock2] = hashToTwoInts(current.professionalId);
 
     const updated = await prisma.$transaction(async (tx) => {
-      await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lock1}, ${lock2})`;
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lock1}::int, ${lock2}::int)`;
 
       const overlapCount = await tx.appointment.count({
         where: {
