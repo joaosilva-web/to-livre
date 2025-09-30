@@ -297,12 +297,24 @@ export async function PUT(req: NextRequest) {
 // DELETE - remover appointment
 // -------------------
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(req: NextRequest) {
   try {
-    const { id } = params;
+    // This route is mounted at /api/appointments (not a dynamic [id] route),
+    // so Next's generated RouteContext won't include params here. Read the id
+    // from the query string or, as a fallback, from the JSON body.
+    const searchId = req.nextUrl.searchParams.get("id");
+    let id: string | null = searchId;
+
+    if (!id) {
+      try {
+        const body = await req.json();
+        id = body?.id ?? null;
+      } catch {
+        // ignore JSON parse errors
+        id = null;
+      }
+    }
+
     if (!id)
       return NextResponse.json<ApiResponse>(
         { success: false, error: "id é obrigatório" },

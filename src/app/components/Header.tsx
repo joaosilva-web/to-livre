@@ -26,7 +26,8 @@ export default function Header() {
         const res = await fetch("/api/auth/whoami");
         if (!res.ok) return;
         const data = await res.json();
-        if (mounted && data?.user) setUser({ id: data.user.id, name: data.user.name });
+        if (mounted && data?.user)
+          setUser({ id: data.user.id, name: data.user.name });
       } catch (e) {
         // ignore
       }

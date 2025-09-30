@@ -36,9 +36,11 @@ export default function AppointmentsPage() {
     const res = await fetch(
       `/api/appointments${query.length ? `?${query.join("&")}` : ""}`
     );
-  const data: Appointment[] = await res.json();
-  const ui = data.map((d) => prismaToUI(d)!).filter(Boolean) as UIAppointment[];
-  setAppointments(ui);
+    const data: Appointment[] = await res.json();
+    const ui = data
+      .map((d) => prismaToUI(d)!)
+      .filter(Boolean) as UIAppointment[];
+    setAppointments(ui);
   }, [filters]);
 
   useEffect(() => {

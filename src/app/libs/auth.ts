@@ -15,7 +15,9 @@ export interface JWTPayload {
 }
 
 if (!process.env.JWT_SECRET) {
-  console.warn("JWT_SECRET is not set. Set it in your environment for secure tokens.");
+  console.warn(
+    "JWT_SECRET is not set. Set it in your environment for secure tokens."
+  );
 }
 
 export function signToken(payload: JWTPayload) {
