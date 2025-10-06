@@ -1,35 +1,21 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import useSession from "@/hooks/useSession";
 import { useRouter } from "next/navigation";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import Button from "@/app/components/ui/Button";
 import Input from "@/app/components/ui/Input";
 import Select from "@/app/components/ui/Select";
+import { useToast } from "@/app/components/ui/ToastErrorProvider";
 import { z } from "zod";
 import { Appointment as PrismaAppointment } from "@/generated/prisma";
 import prismaToUI, { UIAppointment } from "@/lib/appointments";
+import { formatDateLocal } from "@/lib/date";
 
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js";
-import { Bar } from "react-chartjs-2";
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend
-);
+import SlotGrid from "../components/SlotGrid";
+import AuthBanner from "@/app/components/AuthBanner";
 
 const appointmentSchema = z.object({
   clientName: z.string().min(1),
@@ -62,8 +48,13 @@ function Skeleton({ className }: { className: string }) {
 
 export default function NewAppointmentPage() {
   const router = useRouter();
-  const [companyId, setCompanyId] = useState<string | null>(null);
-  const [authError, setAuthError] = useState<string | null>(null);
+  const {
+    user,
+    loading: sessionLoading,
+    error: sessionError,
+    refresh: refreshSession,
+  } = useSession();
+  const companyId = user?.companyId ?? null;
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [services, setServices] = useState<Service[]>([]);
@@ -84,57 +75,23 @@ export default function NewAppointmentPage() {
 
   const [loadingServices, setLoadingServices] = useState(false);
   const [loadingSlots, setLoadingSlots] = useState(false);
+  const [loadingProfessionals, setLoadingProfessionals] = useState(false);
   const [servicesError, setServicesError] = useState<string | null>(null);
   const [professionalsError, setProfessionalsError] = useState<string | null>(
     null
   );
   const [slotsError, setSlotsError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const showToast = useToast();
 
-  // Pega companyId por meio do endpoint /api/auth/whoami (cookie-based JWT)
-  useEffect(() => {
-    const fetchWhoami = async () => {
-      try {
-        const res = await fetch("/api/auth/whoami");
-        if (!res.ok) {
-          setAuthError("Não autenticado. Faça login para continuar.");
-          return console.warn("whoami returned not ok");
-        }
-        const body = await res.json();
-        if (body?.user?.companyId) {
-          setCompanyId(body.user.companyId);
-          setAuthError(null);
-        } else {
-          setAuthError("Conta sem empresa vinculada ou sessão inválida.");
-        }
-      } catch (err) {
-        console.error("Erro ao chamar whoami:", err);
-        setAuthError("Erro ao verificar autenticação. Tente novamente.");
-      }
-    };
-
-    fetchWhoami();
-  }, []);
-
-  // Redirect to auth page if we detected an auth error
-  useEffect(() => {
-    if (authError) {
-      // redirect to auth page with next param so user can return after login
-      try {
-        const currentPath =
-          typeof window !== "undefined" ? window.location.pathname : "/";
-        router.push(`/auth?next=${encodeURIComponent(currentPath)}`);
-      } catch {
-        router.push("/auth");
-      }
-    }
-  }, [authError, router]);
+  // If session error exists, banner will be shown to allow Retry/Login
 
   // Fetch serviços
   useEffect(() => {
     if (!companyId) return;
-    // If we have an auth error, skip fetching services
-    if (authError) return;
+    // If we have a session error, skip fetching services
+    if (sessionError) return;
     setServicesError(null);
     setLoadingServices(true);
     fetch(`/api/services?companyId=${companyId}`)
@@ -159,15 +116,20 @@ export default function NewAppointmentPage() {
       .catch((err) => {
         console.error("Erro ao buscar serviços:", err);
         setServices([]);
-        setServicesError(String(err?.message ?? err));
+        const msg = String(err?.message ?? err);
+        setServicesError(msg);
+        try {
+          showToast.error?.(msg);
+        } catch {}
       })
       .finally(() => setLoadingServices(false));
-  }, [companyId, authError]);
+  }, [companyId, sessionError, showToast]);
 
   // Fetch professionals for the company so we can attach a professionalId to the appointment
   useEffect(() => {
     if (!companyId) return;
     setProfessionalsError(null);
+    setLoadingProfessionals(true);
     fetch(`/api/company/${companyId}/professionals`)
       .then(async (res) => {
         const body = await res.json().catch(() => null);
@@ -185,7 +147,7 @@ export default function NewAppointmentPage() {
           ? resData.data
           : [];
         setProfessionals(list);
-        // set default professionalId if none selected, but avoid reading `form` from closure
+        // set default professionalId if none selected
         if (list.length > 0) {
           setForm((prev) =>
             prev.professionalId ? prev : { ...prev, professionalId: list[0].id }
@@ -195,9 +157,14 @@ export default function NewAppointmentPage() {
       .catch((err) => {
         console.error("Erro ao buscar profissionais:", err);
         setProfessionals([]);
-        setProfessionalsError(String(err?.message ?? err));
-      });
-  }, [companyId]);
+        const msg = String(err?.message ?? err);
+        setProfessionalsError(msg);
+        try {
+          showToast.error?.(msg);
+        } catch {}
+      })
+      .finally(() => setLoadingProfessionals(false));
+  }, [companyId, showToast]);
 
   // Fetch appointments e gera slots
   useEffect(() => {
@@ -210,7 +177,7 @@ export default function NewAppointmentPage() {
     setLoadingSlots(true);
 
     const fetchSlots = async () => {
-      const dateStr = selectedDate.toISOString().split("T")[0];
+      const dateStr = formatDateLocal(selectedDate);
 
       // Horários de funcionamento
       // the API is exposed at /api/working-hours?companyId=... (not under /api/companies/...)
@@ -266,7 +233,11 @@ export default function NewAppointmentPage() {
         setAvailableSlots(slots);
       } catch (err) {
         console.error("Erro ao gerar slots:", err);
-        setSlotsError(String(err ?? "Erro ao gerar slots"));
+        const msg = String(err ?? "Erro ao gerar slots");
+        setSlotsError(msg);
+        try {
+          showToast.error?.(msg);
+        } catch {}
         setAvailableSlots([]);
       } finally {
         setLoadingSlots(false);
@@ -274,7 +245,7 @@ export default function NewAppointmentPage() {
     };
 
     fetchSlots();
-  }, [selectedDate, form.serviceId, services, companyId]);
+  }, [selectedDate, form.serviceId, services, companyId, showToast]);
 
   const handleSlotClick = (time: string) => {
     if (!selectedDate || !form.serviceId) return;
@@ -298,6 +269,7 @@ export default function NewAppointmentPage() {
       if (!professionalId) throw new Error("professionalId não informado");
 
       setSubmitError(null);
+      setSaving(true);
       const res = await fetch("/api/appointments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -315,10 +287,18 @@ export default function NewAppointmentPage() {
         throw new Error(msg);
       }
 
-      router.push("/dashboard/appointments");
+      try {
+        showToast.success?.("Agendamento criado com sucesso.");
+      } catch {}
+      // small delay to allow toast to appear before redirect
+      setTimeout(() => router.push("/dashboard/appointments"), 700);
     } catch (err) {
       console.error(err);
-      alert("Erro ao criar agendamento: " + String(err));
+      try {
+        showToast.error?.("Erro ao criar agendamento: " + String(err));
+      } catch {}
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -329,6 +309,8 @@ export default function NewAppointmentPage() {
   return (
     <div className="flex flex-col items-center min-h-[calc(100vh-200px)]">
       <h1 className="text-2xl font-bold mb-2">Novo Agendamento</h1>
+
+      <AuthBanner />
 
       {step === 1 && (
         <div className="w-full max-w-2xl flex flex-col items-center">
@@ -355,6 +337,7 @@ export default function NewAppointmentPage() {
               value={form.serviceId}
               onChange={(value) => setForm({ ...form, serviceId: value })}
               options={services.map((s) => ({ label: s.name, value: s.id }))}
+              loading={loadingServices}
               disabled={loadingServices}
             />
             {servicesError && (
@@ -369,7 +352,8 @@ export default function NewAppointmentPage() {
                 label: p.name,
                 value: p.id,
               }))}
-              disabled={professionals.length === 0}
+              loading={loadingProfessionals}
+              disabled={loadingProfessionals || professionals.length === 0}
             />
             {professionalsError && (
               <p className="text-red-500 text-sm mt-1">{professionalsError}</p>
@@ -381,50 +365,15 @@ export default function NewAppointmentPage() {
               <Skeleton className="h-[400px] w-full" />
             ) : (
               <div className="h-[400px] w-full">
-                <Bar
-                  data={{
-                    labels: availableSlots.map((slot) => slot.time),
-                    datasets: [
-                      {
-                        label: "Horários",
-                        data: availableSlots.map(() => 1),
-                        backgroundColor: availableSlots.map((slot, i) => {
-                          if (!form.serviceId) return "#e0e0e0";
-                          if (selectedSlot) {
-                            const startIndex = availableSlots.findIndex(
-                              (s) => s.time === selectedSlot
-                            );
-                            const durationSlots = Math.ceil(
-                              (services.find((s) => s.id === form.serviceId)
-                                ?.duration ?? 0) / 30
-                            );
-                            if (
-                              i >= startIndex &&
-                              i < startIndex + durationSlots
-                            )
-                              return "#1ac897";
-                          }
-                          return slot.available ? "#b1f0dc" : "#e0e0e0";
-                        }),
-                        borderRadius: 6,
-                        barThickness: 20,
-                      },
-                    ],
-                  }}
-                  options={{
-                    indexAxis: "y" as const,
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    onClick: (event, elements) => {
-                      if (elements.length > 0) {
-                        const index = elements[0].index;
-                        const slot = availableSlots[index];
-                        if (slot.available) handleSlotClick(slot.time);
-                      }
-                    },
-                  }}
+                <SlotGrid
+                  slots={availableSlots}
+                  selected={selectedSlot}
+                  onSelect={(time: string) => handleSlotClick(time)}
+                  cols={10}
                 />
+                {slotsError && (
+                  <p className="text-red-500 text-sm mt-2">{slotsError}</p>
+                )}
               </div>
             )
           ) : (
@@ -475,7 +424,12 @@ export default function NewAppointmentPage() {
           />
 
           <div className="flex justify-between mt-4">
-            <Button onClick={() => setStep(2)} type="button" variant="outlined">
+            <Button
+              onClick={() => setStep(2)}
+              type="button"
+              variant="outlined"
+              size="sm"
+            >
               Voltar
             </Button>
             {submitError && (
@@ -483,13 +437,18 @@ export default function NewAppointmentPage() {
                 {submitError}
               </p>
             )}
-            <Button
-              type="submit"
-              disabled={isSaveDisabled}
-              className="disabled:opacity-50"
-            >
-              Salvar
-            </Button>
+            <div className="flex items-center gap-3">
+              {/* success is shown via toast */}
+              <Button
+                type="submit"
+                variant="primary"
+                size="sm"
+                disabled={isSaveDisabled}
+                loading={saving}
+              >
+                Salvar
+              </Button>
+            </div>
           </div>
         </form>
       )}

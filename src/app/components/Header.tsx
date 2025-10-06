@@ -7,10 +7,17 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import FullLogo from "./ui/FullLogo";
 import Button from "./ui/Button";
+import useSession from "@/hooks/useSession";
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
-  const [user, setUser] = useState<{ id: string; name: string } | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
+  const { user } = useSession();
+
+  // reflect session user into local simple state for display
+  useEffect(() => {
+    if (user?.name) setUserName(user.name);
+  }, [user]);
 
   const navItems = [
     { label: "Como funciona", href: "/#how" },
@@ -20,22 +27,7 @@ export default function Header() {
   ];
 
   useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const res = await fetch("/api/auth/whoami");
-        if (!res.ok) return;
-        const data = await res.json();
-        if (mounted && data?.user)
-          setUser({ id: data.user.id, name: data.user.name });
-      } catch (e) {
-        // ignore
-      }
-    })();
-
-    return () => {
-      mounted = false;
-    };
+    // session provided by SessionProvider / useSession
   }, []);
 
   async function handleLogout() {

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
 import LayoutWrapper from "./components/LayoutWrapper";
+import { SessionProvider } from "@/context/SessionProvider";
 import { Theme } from "@radix-ui/themes";
 
 const geistPoppins = Poppins({
@@ -31,7 +32,9 @@ export default function RootLayout({
         className={`${geistPoppins.variable} ${geistInter.variable} antialiased`}
       >
         <Theme accentColor="jade" grayColor="sand" radius="large">
-          <LayoutWrapper>{children}</LayoutWrapper>
+          <SessionProvider>
+            <LayoutWrapper>{children}</LayoutWrapper>
+          </SessionProvider>
         </Theme>
       </body>
     </html>

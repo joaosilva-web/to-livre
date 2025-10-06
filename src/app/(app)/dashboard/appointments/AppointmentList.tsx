@@ -4,6 +4,7 @@
 import { Badge } from "@radix-ui/themes";
 
 import { UIAppointment } from "@/lib/appointments";
+import formatBRL from "@/lib/currency";
 
 interface Props {
   appointments: UIAppointment[];
@@ -75,7 +76,7 @@ export default function AppointmentsList({
                 {new Date(appt.date).toLocaleString()}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                R$ {appt.price.toFixed(2)}
+                {formatBRL(appt.price)}
               </td>
               <td
                 className={`px-6 py-4 whitespace-nowrap text-sm font-semibold rounded ${statusColor(

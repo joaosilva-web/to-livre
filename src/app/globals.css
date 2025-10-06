@@ -30,6 +30,8 @@
   --color-feedback-error: #e53935;
   --color-feedback-success: #43a047;
   --color-feedback-warning: #fdd835;
+  /* Slightly darker variant for headers and buttons to improve contrast */
+  --color-feedback-warning-dark: #e6c21f;
   --color-feedback-info: #0288d1;
 
   /* Secundário */
@@ -93,4 +95,52 @@ h3,
 .react-calendar__navigation__label__labelText {
   font-weight: 900 !important;
   color: #555555 !important;
+}
+
+/* --- Small utilities for appointment card status buttons --- */
+/* Status color utilities (use CSS vars so colors are centralized) */
+.bg-feedback-warning {
+  background-color: var(--color-feedback-warning);
+}
+.bg-feedback-warning-dark {
+  background-color: var(--color-feedback-warning-dark);
+}
+.bg-feedback-info {
+  background-color: var(--color-feedback-info);
+}
+.bg-feedback-success {
+  background-color: var(--color-feedback-success);
+}
+.bg-feedback-error {
+  background-color: var(--color-feedback-error);
+}
+.bg-primary-custom {
+  background-color: var(--color-primary);
+}
+
+/* Text helpers */
+.text-on-primary {
+  color: var(--color-text-inverse);
+}
+.text-on-warning {
+  color: black;
+}
+
+/* Button sizing and shared styles */
+.btn-status {
+  width: 2rem;
+  height: 2rem;
+}
+.status-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: opacity 0.12s ease, box-shadow 0.08s ease;
+}
+
+/* Active style fallback (we also use Tailwind ring classes in markup) */
+.status-active {
+  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.06);
 }

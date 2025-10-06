@@ -7,6 +7,13 @@ import Button from "@/app/components/ui/Button";
 import Input from "@/app/components/ui/Input";
 import { z } from "zod";
 import {
+  formatDateLocal,
+  formatDateTimeLocal,
+  parseDateTimeLocal,
+} from "@/lib/date";
+import useSession from "@/hooks/useSession";
+import AuthBanner from "@/app/components/AuthBanner";
+import {
   AppointmentStatus,
   Appointment as PrismaAppointment,
 } from "@/generated/prisma";
@@ -72,6 +79,13 @@ export default function AppointmentForm({ appointment, onClose }: Props) {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const {
+    user,
+    loading: sessionLoading,
+    error: sessionError,
+    refresh: refreshSession,
+  } = useSession();
+  const companyId = user?.companyId ?? null;
 
   useEffect(() => {
     if (!appointment) return;
@@ -95,7 +109,7 @@ export default function AppointmentForm({ appointment, onClose }: Props) {
       clientName: ui.clientName ?? "",
       service: ui.service ?? "",
       price: ui.price ?? 0,
-      date: safeDate.toISOString().slice(0, 16),
+      date: formatDateTimeLocal(safeDate),
       status: ui.status ?? AppointmentStatus.PENDING,
     });
 
@@ -106,12 +120,20 @@ export default function AppointmentForm({ appointment, onClose }: Props) {
 
   // Buscar horários livres
   useEffect(() => {
+    // Re-run when selectedDate changes or when session/company state changes
+    // so we don't attempt to call the API without a companyId.
     if (!selectedDate) return;
+    if (sessionError) return;
+    if (!companyId) return;
 
     const fetchSlots = async () => {
-      const from = selectedDate.toISOString().split("T")[0];
+      const from = formatDateLocal(selectedDate);
       const to = from;
-      const res = await fetch(`/api/appointments?from=${from}&to=${to}`);
+      const res = await fetch(
+        `/api/appointments?companyId=${encodeURIComponent(
+          companyId
+        )}&from=${from}&to=${to}`
+      );
       const data: UIAppointment[] = await res.json();
 
       const slots: AvailableSlot[] = Array.from({ length: 10 }, (_, i) => {
@@ -127,7 +149,9 @@ export default function AppointmentForm({ appointment, onClose }: Props) {
     };
 
     fetchSlots();
-  }, [selectedDate]);
+  }, [selectedDate, companyId, sessionError]);
+
+  // session handled by SessionProvider/useSession
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -138,10 +162,21 @@ export default function AppointmentForm({ appointment, onClose }: Props) {
         ? `/api/appointments/${appointment.id}`
         : "/api/appointments";
 
+      // ensure we send a proper ISO instant to the server by parsing the local datetime-local value
+      const payload = { ...form } as any;
+      if (form.date) {
+        payload.date = parseDateTimeLocal(String(form.date)).toISOString();
+      }
+      if (!companyId && !appointment)
+        throw new Error("CompanyId não encontrado");
+
+      // attach companyId when creating new appointment; when updating, server infers from current record
+      if (!appointment) payload.companyId = companyId;
+
       await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, date: new Date(form.date) }),
+        body: JSON.stringify(payload),
       });
 
       onClose();
@@ -156,7 +191,7 @@ export default function AppointmentForm({ appointment, onClose }: Props) {
     const [hour, minute] = time.split(":").map(Number);
     const dt = new Date(selectedDate);
     dt.setHours(hour, minute, 0, 0);
-    setForm({ ...form, date: dt.toISOString().slice(0, 16) });
+    setForm({ ...form, date: formatDateTimeLocal(dt) });
     setSelectedSlot(time);
   };
 
@@ -225,6 +260,7 @@ export default function AppointmentForm({ appointment, onClose }: Props) {
         onSubmit={handleSubmit}
         className="bg-white p-6 rounded-lg shadow-md w-full max-w-2xl flex flex-col gap-4"
       >
+        <AuthBanner />
         <h2 className="text-xl text-text font-bold mb-2">
           {appointment ? "Editar Agendamento" : "Novo Agendamento"}
         </h2>

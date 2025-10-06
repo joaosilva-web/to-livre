@@ -17,6 +17,7 @@ import {
   Cell,
   PieLabelRenderProps,
 } from "recharts";
+import formatBRL from "@/lib/currency";
 
 interface User {
   name?: string;
@@ -102,7 +103,7 @@ export default function DashboardContent({ user }: Props) {
           <h2 className="text-lg font-semibold text-text-secondary">
             Receita no Mês
           </h2>
-          <p className="text-3xl font-bold text-primary">R$ 2.100</p>
+          <p className="text-3xl font-bold text-primary">{formatBRL(2100)}</p>
         </div>
       </div>
 
