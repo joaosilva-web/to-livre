@@ -5,6 +5,8 @@ export interface UIAppointment {
   clientName: string;
   service: string; // service name (if relation expanded) or serviceId fallback
   serviceId?: string; // original serviceId from Prisma
+  professionalId?: string;
+  professionalName?: string;
   price: number;
   date: string; // ISO-like yyyy-mm-ddTHH:MM
   status: PrismaAppointment["status"];
@@ -20,29 +22,58 @@ export function prismaToUI(
   if (!appt) return null;
 
   const start = appt.startTime ? new Date(appt.startTime) : new Date();
-  // prefer relational `service` string if populated, otherwise fallback to serviceId
-  const hasServiceProp = (o: unknown): o is { service?: unknown } => {
-    return (
-      !!o &&
-      typeof o === "object" &&
-      "service" in (o as Record<string, unknown>)
-    );
-  };
-
+  // prefer relational `service.name` if relation is expanded, otherwise fallback to serviceId
   const apptRecord = appt as Record<string, unknown>;
-  const service =
-    hasServiceProp(appt) && typeof apptRecord.service === "string"
-      ? (apptRecord.service as string)
-      : appt.serviceId ?? "";
+  let service = "";
+  if (apptRecord.service) {
+    // if the relation was expanded by Prisma include, `service` will be an object
+    if (typeof apptRecord.service === "object" && apptRecord.service !== null) {
+      const svc = apptRecord.service as Record<string, unknown>;
+      if (typeof svc.name === "string") service = svc.name as string;
+    } else if (typeof apptRecord.service === "string") {
+      // support legacy cases where `service` might be a string
+      service = apptRecord.service as string;
+    }
+  }
+  if (!service) service = appt.serviceId ?? "";
+
+  // professional name fallback
+  let professionalName = "";
+  if (apptRecord.professional) {
+    if (
+      typeof apptRecord.professional === "object" &&
+      apptRecord.professional !== null
+    ) {
+      const prof = apptRecord.professional as Record<string, unknown>;
+      if (typeof prof.name === "string") professionalName = prof.name as string;
+    } else if (typeof apptRecord.professional === "string") {
+      professionalName = apptRecord.professional as string;
+    }
+  }
+  const professionalId = appt.professionalId ?? undefined;
+  // determine price: prefer explicit appointment price, otherwise try related service.price
+  let price = typeof appt.price === "number" ? appt.price : undefined;
+  if (
+    price === undefined &&
+    apptRecord.service &&
+    typeof apptRecord.service === "object"
+  ) {
+    const svc = apptRecord.service as Record<string, unknown>;
+    if (typeof svc.price === "number") price = svc.price;
+  }
+  if (price === undefined) price = 0;
+
   return {
     id: appt.id,
     clientName: appt.clientName ?? "",
     service: String(service),
     serviceId: appt.serviceId,
-    price: appt.price ?? 0,
+    price,
     // keep full ISO timestamp (with timezone) so client comparisons are accurate
     date: start.toISOString(),
     status: appt.status,
+    professionalId,
+    professionalName,
   };
 }
 
@@ -50,10 +81,14 @@ export function prismaToUI(
  * Converte o formato UI para o payload esperado pela API/Prisma.
  * Recebe um UIAppointment parcial (form) e converte date (string) para ISO.
  */
+import { parseDateTimeLocal } from "@/lib/date";
+
 export function uiToPrisma(
   form: Partial<UIAppointment> & { serviceId?: string }
 ) {
-  const startTime = form.date ? new Date(form.date).toISOString() : undefined;
+  const startTime = form.date
+    ? parseDateTimeLocal(String(form.date)).toISOString()
+    : undefined;
   return {
     clientName: form.clientName,
     // support legacy `service` field from UI forms (fallback) and prefer explicit serviceId
