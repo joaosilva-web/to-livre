@@ -54,7 +54,10 @@ async function main() {
     );
 
     // call the API for today's date
-    const isoDate = start.toISOString().slice(0, 10);
+    const pad = (n) => String(n).padStart(2, "0");
+    const isoDate = `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(
+      start.getDate()
+    )}`;
     const url = `${baseUrl}/api/appointments?companyId=${encodeURIComponent(
       companyId
     )}&from=${isoDate}&to=${isoDate}`;

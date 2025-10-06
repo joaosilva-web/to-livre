@@ -1,10 +1,17 @@
 export function parseDayRange(from: string, to: string) {
-  const fromDate = new Date(from);
-  // normalize to UTC start of day
-  fromDate.setUTCHours(0, 0, 0, 0);
-  const toDate = new Date(to);
-  // normalize to UTC end of day
-  toDate.setUTCHours(23, 59, 59, 999);
+  // Interpret incoming date strings `YYYY-MM-DD` as local dates.
+  // Build Date objects at local start/end of day and return them as instants.
+  function parseLocal(dateStr: string) {
+    const [y, m, d] = dateStr.split("-").map(Number);
+    // new Date(year, monthIndex, day) constructs local midnight
+    const dt = new Date(y, (m || 1) - 1, d || 1);
+    return dt;
+  }
+
+  const fromDate = parseLocal(from);
+  fromDate.setHours(0, 0, 0, 0);
+  const toDate = parseLocal(to);
+  toDate.setHours(23, 59, 59, 999);
   return { fromDate, toDate };
 }
 

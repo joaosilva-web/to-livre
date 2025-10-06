@@ -152,3 +152,11 @@ NEXT_PUBLIC_RECAPTCHA_SITE_KEY=
 ## 💙 Feito com carinho por João
 
 [🔗 LinkedIn](https://www.linkedin.com/in/joaosilvadeveloper/) • [🐙 GitHub](https://github.com/joaosilva-web)
+
+---
+
+## 🕒 Política de Data/Hora
+
+O projeto lida com datas e horários seguindo regras para evitar ambiguidades entre horário local do cliente e instantes UTC no servidor.
+
+- Veja `docs/DATETIME.md` para a política completa e exemplos de uso (`formatDateLocal`, `formatDateTimeLocal`, `parseDateTimeLocal`).
