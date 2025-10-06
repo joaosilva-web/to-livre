@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
-    "postinstall": "prisma generate && prisma migrate deploy",
+    "postinstall": "prisma generate && prisma migrate deploy && node scripts/install-git-hooks.js",
+    "check-dates": "node scripts/check-dates.js",
     "lint": "next lint"
   },
   "test": "vitest",
