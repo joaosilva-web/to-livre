@@ -1,0 +1,75 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Ocupaê API",
+    "version": "0.1.0",
+    "description": "Minimal OpenAPI spec for appointments endpoints (work in progress)."
+  },
+  "servers": [
+    { "url": "/" }
+  ],
+  "paths": {
+    "/api/appointments": {
+      "get": {
+        "summary": "List appointments",
+        "parameters": [
+          { "name": "companyId", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "from", "in": "query", "required": false, "schema": { "type": "string", "format": "date" } },
+          { "name": "to", "in": "query", "required": false, "schema": { "type": "string", "format": "date" } },
+          { "name": "professionalId", "in": "query", "required": false, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "List of appointments", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Appointment" } } } } },
+          "400": { "description": "Bad request" }
+        }
+      },
+      "post": {
+        "summary": "Create appointment",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AppointmentInput" } } } },
+        "responses": { "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Appointment" } } } }, "400": { "description": "Bad request" }, "409": { "description": "Conflict (overlap)" } }
+      }
+    },
+    "/api/appointments/{id}": {
+      "put": {
+        "summary": "Update appointment",
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } } ],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AppointmentInput" } } } },
+        "responses": { "200": { "description": "Updated", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Appointment" } } } }, "400": { "description": "Bad request" }, "409": { "description": "Conflict (overlap)" } }
+      },
+      "delete": {
+        "summary": "Delete appointment",
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } } ],
+        "responses": { "204": { "description": "No content" }, "404": { "description": "Not found" } }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Appointment": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "clientName": { "type": "string" },
+          "service": { "type": "string" },
+          "serviceId": { "type": "string" },
+          "professionalId": { "type": "string" },
+          "professionalName": { "type": "string" },
+          "price": { "type": "number" },
+          "date": { "type": "string", "format": "date-time" },
+          "status": { "type": "string" }
+        }
+      },
+      "AppointmentInput": {
+        "type": "object",
+        "properties": {
+          "companyId": { "type": "string" },
+          "professionalId": { "type": "string" },
+          "clientName": { "type": "string" },
+          "serviceId": { "type": "string" },
+          "startTime": { "type": "string", "format": "date-time" },
+          "status": { "type": "string" }
+        }
+      }
+    }
+  }
+}
