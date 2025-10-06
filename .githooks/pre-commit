@@ -1,0 +1,5 @@
+#!/usr/bin/env node
+// Pre-commit hook: run check-dates script
+const { spawnSync } = require("child_process");
+const res = spawnSync("node", ["scripts/check-dates.js"], { stdio: "inherit" });
+process.exit(res.status);
