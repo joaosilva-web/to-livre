@@ -160,3 +160,11 @@ NEXT_PUBLIC_RECAPTCHA_SITE_KEY=
 O projeto lida com datas e horários seguindo regras para evitar ambiguidades entre horário local do cliente e instantes UTC no servidor.
 
 - Veja `docs/DATETIME.md` para a política completa e exemplos de uso (`formatDateLocal`, `formatDateTimeLocal`, `parseDateTimeLocal`).
+
+---
+
+## 📚 Documentação da API (Swagger)
+
+Uma interface Swagger UI está disponível em `/swagger.html` e consome a especificação em `/api/docs`.
+
+Exemplo local: http://localhost:3000/swagger.html
