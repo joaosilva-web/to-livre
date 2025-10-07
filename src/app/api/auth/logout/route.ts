@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import * as api from "@/app/libs/apiResponse";
 
 export async function POST() {
-  const res = NextResponse.json({ message: "Logout realizado" });
+  const res = api.ok({ message: "Logout realizado" });
   res.cookies.set({
     name: "token",
     value: "",

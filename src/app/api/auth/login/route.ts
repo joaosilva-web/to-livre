@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     companyId: user.companyId,
   });
 
-  const res = NextResponse.json({ message: "Login realizado com sucesso", token });
+  const res = api.ok({ message: "Login realizado com sucesso", token });
   res.cookies.set({
     name: "token",
     value: token,
