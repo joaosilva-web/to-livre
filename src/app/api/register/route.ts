@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import bcrypt from "bcrypt";
 import { verifyRecaptcha } from "@/app/libs/verifyRecaptcha";
 import { checkRateLimit } from "@/app/libs/rateLimit";
+import * as api from "@/app/libs/apiResponse";
 
 export async function POST(req: Request) {
   const body = await req.json();
@@ -19,32 +20,20 @@ export async function POST(req: Request) {
     req.headers.get("x-real-ip") ||
     "unknown";
   const allowed = await checkRateLimit(ip);
-  if (!allowed)
-    return new Response(JSON.stringify({ message: "Too many requests" }), {
-      status: 429,
-    });
+  if (!allowed) return api.tooMany();
 
   // If recaptcha is configured, verify token
   if (recaptchaToken) {
     const ok = await verifyRecaptcha(recaptchaToken);
-    if (!ok)
-      return new Response(JSON.stringify({ message: "reCAPTCHA failed" }), {
-        status: 400,
-      });
+      if (!ok) return api.badRequest("reCAPTCHA failed");
   }
 
   const exists = await prisma.user.findUnique({ where: { email } });
-  if (exists)
-    return new Response(JSON.stringify({ message: "E-mail já cadastrado" }), {
-      status: 400,
-    });
+  if (exists) return api.badRequest("E-mail já cadastrado");
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
   await prisma.user.create({ data: { name, email, password: hashedPassword } });
 
-  return new Response(
-    JSON.stringify({ message: "Usuário criado com sucesso" }),
-    { status: 201 }
-  );
+  return api.created({ message: "Usuário criado com sucesso" });
 }

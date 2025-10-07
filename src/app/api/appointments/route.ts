@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z, ZodError } from "zod";
 import prisma from "@/lib/prisma";
 import { buildAppointmentWhere } from "@/lib/appointmentsRange";
+import * as api from "@/app/libs/apiResponse";
 
 // Tipagem ApiResponse
 interface ApiResponse<T = unknown> {
@@ -73,13 +74,7 @@ export async function POST(req: NextRequest) {
       select: { id: true, duration: true, companyId: true },
     });
     if (!service || service.companyId !== parsed.companyId)
-      return NextResponse.json<ApiResponse>(
-        {
-          success: false,
-          error: "Serviço não encontrado ou não pertence à empresa",
-        },
-        { status: 400 }
-      );
+      return api.badRequest("Serviço não encontrado ou não pertence à empresa");
 
     const end = new Date(start.getTime() + service.duration * 60_000);
 
@@ -89,13 +84,7 @@ export async function POST(req: NextRequest) {
       where: { companyId: parsed.companyId, dayOfWeek: day },
     });
     if (!wh)
-      return NextResponse.json<ApiResponse>(
-        {
-          success: false,
-          error: "Horário de funcionamento não configurado para esse dia",
-        },
-        { status: 400 }
-      );
+      return api.badRequest("Horário de funcionamento não configurado para esse dia");
 
     const startMinutes = start.getUTCHours() * 60 + start.getUTCMinutes();
     const endMinutes = end.getUTCHours() * 60 + end.getUTCMinutes();
@@ -103,13 +92,7 @@ export async function POST(req: NextRequest) {
       startMinutes < timeToMinutes(wh.openTime) ||
       endMinutes > timeToMinutes(wh.closeTime)
     ) {
-      return NextResponse.json<ApiResponse>(
-        {
-          success: false,
-          error: "Agendamento fora do horário de funcionamento",
-        },
-        { status: 400 }
-      );
+      return api.badRequest("Agendamento fora do horário de funcionamento");
     }
 
     const [lock1, lock2] = hashToTwoInts(parsed.professionalId);
@@ -125,9 +108,12 @@ export async function POST(req: NextRequest) {
       });
 
       if (overlapCount > 0) {
-        throw new Error(
+        // throw a specific error that we'll catch and map to 409
+        const e: any = new Error(
           "Já existe agendamento conflitando para esse profissional nesse horário"
         );
+        e.code = "OVERLAP";
+        throw e;
       }
 
       return await tx.appointment.create({
@@ -142,25 +128,20 @@ export async function POST(req: NextRequest) {
       });
     });
 
-    return NextResponse.json<ApiResponse>({ success: true, data: created });
+    return api.ok(created);
   } catch (err) {
     if (err instanceof ZodError) {
       const errorDetails = err.issues.map((i) => ({
         path: i.path.join("."),
         message: i.message,
       }));
-      return NextResponse.json<ApiResponse>(
-        { success: false, error: "Erro de validação", errorDetails },
-        { status: 400 }
-      );
+      return api.badRequest("Erro de validação", errorDetails);
     }
-    return NextResponse.json<ApiResponse>(
-      {
-        success: false,
-        error: (err as Error).message || "Erro ao criar agendamento",
-      },
-      { status: 500 }
-    );
+    const e = err as any;
+    if (e?.code === "OVERLAP") {
+      return api.conflict(e.message);
+    }
+    return api.serverError((err as Error).message || "Erro ao criar agendamento");
   }
 }
 
@@ -176,11 +157,7 @@ export async function GET(req: NextRequest) {
     const from = searchParams.get("from");
     const to = searchParams.get("to");
 
-    if (!companyId)
-      return NextResponse.json<ApiResponse>(
-        { success: false, error: "companyId é obrigatório" },
-        { status: 400 }
-      );
+    if (!companyId) return api.badRequest("companyId é obrigatório");
 
     let where: Record<string, unknown>;
     if (from || to) {
@@ -197,18 +174,9 @@ export async function GET(req: NextRequest) {
       orderBy: { startTime: "asc" },
     });
 
-    return NextResponse.json<ApiResponse>({
-      success: true,
-      data: appointments,
-    });
+    return api.ok(appointments);
   } catch (err) {
-    return NextResponse.json<ApiResponse>(
-      {
-        success: false,
-        error: (err as Error).message || "Erro ao listar agendamentos",
-      },
-      { status: 500 }
-    );
+    return api.serverError((err as Error).message || "Erro ao listar agendamentos");
   }
 }
 
@@ -220,11 +188,7 @@ export async function PUT(req: NextRequest) {
   try {
     const body = await req.json();
     const { id, ...rest } = body;
-    if (!id)
-      return NextResponse.json<ApiResponse>(
-        { success: false, error: "id é obrigatório" },
-        { status: 400 }
-      );
+    if (!id) return api.badRequest("id é obrigatório");
 
     const parsed = updateAppointmentSchema.parse(rest);
 
@@ -327,11 +291,8 @@ export async function DELETE(req: NextRequest) {
       );
 
     await prisma.appointment.delete({ where: { id } });
-    return NextResponse.json<ApiResponse>({ success: true, data: { id } });
+    return api.ok({ id });
   } catch (err) {
-    return NextResponse.json<ApiResponse>(
-      { success: false, error: (err as Error).message || "Erro ao deletar" },
-      { status: 500 }
-    );
+    return api.serverError((err as Error).message || "Erro ao deletar");
   }
 }
