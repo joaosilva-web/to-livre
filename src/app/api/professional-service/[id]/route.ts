@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import prisma from "@/lib/prisma";
+import * as api from "@/app/libs/apiResponse";
 
 // DELETE /api/professional-service/[id]
 export async function DELETE(req: NextRequest) {
@@ -10,21 +11,13 @@ export async function DELETE(req: NextRequest) {
     const idFromQuery = req.nextUrl.searchParams.get("id");
     const id = idFromQuery ?? idFromPath;
 
-    if (!id) {
-      return NextResponse.json(
-        { success: false, error: "id é obrigatório" },
-        { status: 400 }
-      );
-    }
+    if (!id) return api.badRequest("id é obrigatório");
 
     await prisma.professionalService.delete({ where: { id } });
 
-    return NextResponse.json({ success: true });
+    return api.ok({});
   } catch (err) {
     const error = err as Error;
-    return NextResponse.json(
-      { success: false, error: error.message || "Erro ao deletar associação" },
-      { status: 500 }
-    );
+    return api.serverError(error.message || "Erro ao deletar associação");
   }
 }

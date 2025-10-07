@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z, ZodError } from "zod";
 
 import prisma from "@/lib/prisma";
+import * as api from "@/app/libs/apiResponse";
 
 // Validação de associação profissional-serviço
 const professionalServiceSchema = z.object({
@@ -14,15 +15,7 @@ export async function GET(req: NextRequest) {
   const companyId = req.nextUrl.searchParams.get("companyId");
   const professionalId = req.nextUrl.searchParams.get("professionalId");
 
-  if (!companyId && !professionalId) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: "É necessário informar companyId ou professionalId",
-      },
-      { status: 400 }
-    );
-  }
+  if (!companyId && !professionalId) return api.badRequest("É necessário informar companyId ou professionalId");
 
   let associations;
 
@@ -50,7 +43,7 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  return NextResponse.json({ success: true, data: associations });
+  return api.ok(associations);
 }
 
 // POST /api/professional-service
@@ -61,23 +54,16 @@ export async function POST(req: NextRequest) {
 
     const created = await prisma.professionalService.create({ data: parsed });
 
-    return NextResponse.json({ success: true, data: created });
+    return api.created(created);
   } catch (err) {
     if (err instanceof ZodError) {
       const errorDetails = err.issues.map((issue) => ({
         path: issue.path.join("."),
         message: issue.message,
       }));
-      return NextResponse.json(
-        { success: false, error: "Erro de validação", errorDetails },
-        { status: 400 }
-      );
+      return api.badRequest("Erro de validação", errorDetails);
     }
-
     const error = err as Error;
-    return NextResponse.json(
-      { success: false, error: error.message || "Erro ao criar associação" },
-      { status: 500 }
-    );
+    return api.serverError(error.message || "Erro ao criar associação");
   }
 }

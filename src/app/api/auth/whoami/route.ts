@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { getUserFromCookie } from "@/app/libs/auth";
+import * as api from "@/app/libs/apiResponse";
 
 export async function GET() {
   const user = await getUserFromCookie();
-  if (!user)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) return api.unauthorized();
 
-  return NextResponse.json({ success: true, user });
+  return api.ok({ user });
 }
