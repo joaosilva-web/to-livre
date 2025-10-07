@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { startOfDay, endOfDay } from "date-fns";
 
 import prisma from "@/lib/prisma";
+import * as api from "@/app/libs/apiResponse";
 
 function parseLocalDate(dateStr: string): Date {
   // Trata "YYYY-MM-DD" como data no timezone local
@@ -14,8 +15,7 @@ function parseLocalDate(dateStr: string): Date {
 
 export async function GET(req: NextRequest) {
   const user = await getUserFromCookie();
-  if (!user)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) return api.unauthorized();
 
   const url = new URL(req.url);
   const date = url.searchParams.get("date");
@@ -46,13 +46,9 @@ export async function GET(req: NextRequest) {
       },
       orderBy: { startTime: "desc" },
     });
-
-    return NextResponse.json(appointments);
+    return api.ok(appointments);
   } catch (error: unknown) {
     console.error(error);
-    return NextResponse.json(
-      { error: "Erro ao buscar agendamentos" },
-      { status: 500 }
-    );
+    return api.serverError("Erro ao buscar agendamentos");
   }
 }

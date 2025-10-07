@@ -3,6 +3,7 @@ import { z, ZodError } from "zod";
 import prisma from "@/lib/prisma";
 import { buildAppointmentWhere } from "@/lib/appointmentsRange";
 import * as api from "@/app/libs/apiResponse";
+import { checkRateLimit } from "@/app/libs/rateLimit";
 
 // Tipagem ApiResponse
 interface ApiResponse<T = unknown> {
@@ -65,6 +66,12 @@ function hashToTwoInts(key: string): [number, number] {
 
 export async function POST(req: NextRequest) {
   try {
+    // Rate limit by IP (best-effort using x-forwarded-for header)
+    const ip =
+      req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown";
+    const allowed = await checkRateLimit(ip);
+    if (!allowed) return api.tooMany();
+
     const body = await req.json();
     const parsed = createAppointmentSchema.parse(body);
     const start = new Date(parsed.startTime);

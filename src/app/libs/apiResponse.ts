@@ -15,6 +15,18 @@ export function badRequest(message: string, errorDetails?: any) {
   );
 }
 
+export function unauthorized(message = "Unauthorized") {
+  return NextResponse.json({ success: false, error: message } as any, {
+    status: 401,
+  });
+}
+
+export function forbidden(message = "Forbidden") {
+  return NextResponse.json({ success: false, error: message } as any, {
+    status: 403,
+  });
+}
+
 export function conflict(message = "Conflict") {
   return NextResponse.json({ success: false, error: message } as any, {
     status: 409,

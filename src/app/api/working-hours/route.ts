@@ -3,6 +3,7 @@ import { WorkingHours } from "@/generated/prisma";
 import { z, ZodError } from "zod";
 
 import prisma from "@/lib/prisma";
+import * as api from "@/app/libs/apiResponse";
 
 // Tipagem de retorno padrão
 interface ApiResponse<T = unknown> {
@@ -25,12 +26,7 @@ type WorkingHoursInput = z.infer<typeof workingHoursSchema>;
 // GET /api/working-hours?companyId=...
 export async function GET(req: NextRequest) {
   const companyId = req.nextUrl.searchParams.get("companyId");
-  if (!companyId) {
-    return NextResponse.json<ApiResponse>(
-      { success: false, error: "companyId é obrigatório" },
-      { status: 400 }
-    );
-  }
+  if (!companyId) return api.badRequest("companyId é obrigatório");
 
   try {
     const hours: WorkingHours[] = await prisma.workingHours.findMany({
@@ -38,19 +34,10 @@ export async function GET(req: NextRequest) {
       orderBy: { dayOfWeek: "asc" },
     });
 
-    return NextResponse.json<ApiResponse<WorkingHours[]>>({
-      success: true,
-      data: hours,
-    });
+    return api.ok(hours);
   } catch (err: unknown) {
     const error = err instanceof Error ? err.message : "Erro desconhecido";
-    return NextResponse.json<ApiResponse>(
-      {
-        success: false,
-        error,
-      },
-      { status: 500 }
-    );
+    return api.serverError(error);
   }
 }
 
@@ -61,38 +48,25 @@ export async function POST(req: NextRequest) {
     const parsed: WorkingHoursInput = workingHoursSchema.parse(body);
 
     if (parsed.openTime >= parsed.closeTime) {
-      return NextResponse.json<ApiResponse>(
-        { success: false, error: "openTime deve ser menor que closeTime" },
-        { status: 400 }
-      );
+      return api.badRequest("openTime deve ser menor que closeTime");
     }
 
     const created: WorkingHours = await prisma.workingHours.create({
       data: parsed,
     });
 
-    return NextResponse.json<ApiResponse<WorkingHours>>({
-      success: true,
-      data: created,
-    });
+    return api.created(created);
   } catch (err: unknown) {
     if (err instanceof ZodError) {
       const errorDetails = err.issues.map((issue) => ({
         path: issue.path.join("."),
         message: issue.message,
       }));
-
-      return NextResponse.json<ApiResponse>(
-        { success: false, error: "Erro de validação", errorDetails },
-        { status: 400 }
-      );
+      return api.badRequest("Erro de validação", errorDetails);
     }
 
     const error = err instanceof Error ? err.message : "Erro desconhecido";
 
-    return NextResponse.json<ApiResponse>(
-      { success: false, error },
-      { status: 500 }
-    );
+    return api.serverError(error);
   }
 }

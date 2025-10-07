@@ -3,6 +3,7 @@ import { Service } from "@/generated/prisma";
 import { z, ZodError } from "zod";
 
 import prisma from "@/lib/prisma";
+import * as api from "@/app/libs/apiResponse";
 
 interface ApiResponse<T = unknown> {
   success: boolean;
@@ -29,10 +30,7 @@ type ServiceInput = z.infer<typeof serviceSchema>;
 export async function GET(req: NextRequest) {
   const companyId = req.nextUrl.searchParams.get("companyId");
   if (!companyId) {
-    return NextResponse.json<ApiResponse>(
-      { success: false, error: "companyId é obrigatório" },
-      { status: 400 }
-    );
+    return api.badRequest("companyId é obrigatório");
   }
   console.log("companyId:", companyId);
   try {
@@ -41,16 +39,10 @@ export async function GET(req: NextRequest) {
       orderBy: { name: "asc" },
     });
 
-    return NextResponse.json<ApiResponse<Service[]>>({
-      success: true,
-      data: services,
-    });
+    return api.ok(services);
   } catch (err: unknown) {
     const error = err instanceof Error ? err.message : "Erro desconhecido";
-    return NextResponse.json<ApiResponse>(
-      { success: false, error },
-      { status: 500 }
-    );
+    return api.serverError(error);
   }
 }
 
@@ -61,26 +53,17 @@ export async function POST(req: NextRequest) {
     const parsed: ServiceInput = serviceSchema.parse(body);
 
     const created: Service = await prisma.service.create({ data: parsed });
-    return NextResponse.json<ApiResponse<Service>>({
-      success: true,
-      data: created,
-    });
+    return api.created(created);
   } catch (err: unknown) {
     if (err instanceof ZodError) {
       const errorDetails = err.issues.map((issue) => ({
         path: issue.path.join("."),
         message: issue.message,
       }));
-      return NextResponse.json<ApiResponse>(
-        { success: false, error: "Erro de validação", errorDetails },
-        { status: 400 }
-      );
+      return api.badRequest("Erro de validação", errorDetails);
     }
 
     const error = err instanceof Error ? err.message : "Erro ao salvar serviço";
-    return NextResponse.json<ApiResponse>(
-      { success: false, error },
-      { status: 500 }
-    );
+    return api.serverError(error);
   }
 }
