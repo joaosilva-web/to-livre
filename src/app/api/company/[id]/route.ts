@@ -4,6 +4,7 @@ import { Company } from "@/generated/prisma";
 import { getUserFromCookie, JWTPayload } from "@/app/libs/auth";
 
 import prisma from "@/lib/prisma";
+import * as api from "@/app/libs/apiResponse";
 
 interface CompanyParams {
   id: string;
@@ -13,34 +14,22 @@ interface CompanyParams {
 export async function GET(req: NextRequest, context: any) {
   const { params } = context as { params: CompanyParams };
   const user: JWTPayload | null = await getUserFromCookie();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  if (!user) return api.unauthorized();
 
   const { id } = params;
 
-  if (user.companyId !== id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  if (user.companyId !== id) return api.forbidden();
 
   try {
     const company: Company | null = await prisma.company.findUnique({
       where: { id },
     });
 
-    if (!company) {
-      return NextResponse.json(
-        { error: "Empresa não encontrada" },
-        { status: 404 }
-      );
-    }
+    if (!company) return api.badRequest("Empresa não encontrada");
 
-    return NextResponse.json(company, { status: 200 });
+    return api.ok(company);
   } catch (error) {
     console.error(error);
-    return NextResponse.json(
-      { error: "Erro ao buscar empresa" },
-      { status: 500 }
-    );
+    return api.serverError("Erro ao buscar empresa");
   }
 }

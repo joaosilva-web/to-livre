@@ -5,6 +5,7 @@ import { getUserFromCookie, JWTPayload } from "@/app/libs/auth";
 import { z, ZodError } from "zod";
 
 import prisma from "@/lib/prisma";
+import * as api from "@/app/libs/apiResponse";
 
 // Schema para validar dados da empresa
 const companySchema = z.object({
@@ -21,8 +22,7 @@ type CompanyInput = z.infer<typeof companySchema>;
 
 export async function POST(req: NextRequest) {
   const user: JWTPayload | null = await getUserFromCookie();
-  if (!user)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) return api.unauthorized();
 
   try {
     const body: unknown = await req.json();
@@ -36,33 +36,22 @@ export async function POST(req: NextRequest) {
     });
 
     // Vincula o usuário à empresa
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { companyId: company.id },
-    });
+    await prisma.user.update({ where: { id: user.id }, data: { companyId: company.id } });
 
-    return NextResponse.json(company, { status: 201 });
+    return api.created(company);
   } catch (error) {
     console.error(error);
     if (error instanceof ZodError) {
-      return NextResponse.json({ error: error.errors }, { status: 400 });
+      return api.badRequest("Erro de validação", error.errors);
     }
-    return NextResponse.json(
-      { error: "Erro ao criar empresa" },
-      { status: 500 }
-    );
+    return api.serverError("Erro ao criar empresa");
   }
 }
 
 export async function PUT(req: NextRequest) {
   const user: JWTPayload | null = await getUserFromCookie();
-  if (!user)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!user.companyId)
-    return NextResponse.json(
-      { error: "Empresa não encontrada" },
-      { status: 404 }
-    );
+  if (!user) return api.unauthorized();
+  if (!user.companyId) return api.badRequest("Empresa não encontrada");
 
   try {
     const body: unknown = await req.json();
@@ -73,15 +62,12 @@ export async function PUT(req: NextRequest) {
       data,
     });
 
-    return NextResponse.json(company, { status: 200 });
+    return api.ok(company);
   } catch (error) {
     console.error(error);
     if (error instanceof ZodError) {
-      return NextResponse.json({ error: error.errors }, { status: 400 });
+      return api.badRequest("Erro de validação", error.errors);
     }
-    return NextResponse.json(
-      { error: "Erro ao atualizar empresa" },
-      { status: 500 }
-    );
+    return api.serverError("Erro ao atualizar empresa");
   }
 }

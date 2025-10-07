@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { PrismaClient } from "@/generated/prisma";
 import { compare } from "bcrypt";
 import { signToken } from "@/app/libs/auth";
+import * as api from "@/app/libs/apiResponse";
 
 const prisma = new PrismaClient();
 
@@ -10,15 +11,10 @@ export async function POST(req: Request) {
   const { email, password } = await req.json();
 
   const user = await prisma.user.findUnique({ where: { email } });
-  if (!user)
-    return NextResponse.json(
-      { error: "Usuário não encontrado" },
-      { status: 401 }
-    );
+  if (!user) return api.unauthorized("Usuário não encontrado");
 
   const isValid = await compare(password, user.password);
-  if (!isValid)
-    return NextResponse.json({ error: "Senha inválida" }, { status: 401 });
+  if (!isValid) return api.unauthorized("Senha inválida");
 
   const token = signToken({
     id: user.id,
@@ -28,10 +24,7 @@ export async function POST(req: Request) {
     companyId: user.companyId,
   });
 
-  const res = NextResponse.json({
-    message: "Login realizado com sucesso",
-    token,
-  });
+  const res = NextResponse.json({ message: "Login realizado com sucesso", token });
   res.cookies.set({
     name: "token",
     value: token,
