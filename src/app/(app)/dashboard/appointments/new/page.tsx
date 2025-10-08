@@ -48,12 +48,7 @@ function Skeleton({ className }: { className: string }) {
 
 export default function NewAppointmentPage() {
   const router = useRouter();
-  const {
-    user,
-    loading: sessionLoading,
-    error: sessionError,
-    refresh: refreshSession,
-  } = useSession();
+  const { user, error: sessionError } = useSession();
   const companyId = user?.companyId ?? null;
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -85,6 +80,17 @@ export default function NewAppointmentPage() {
   const [saving, setSaving] = useState(false);
   const showToast = useToast();
 
+  const getErrMessage = (err: unknown) => {
+    if (!err) return String(err);
+    if (typeof err === "string") return err;
+    if (err instanceof Error) return err.message;
+    try {
+      return String((err as { message?: unknown }).message ?? err);
+    } catch {
+      return String(err);
+    }
+  };
+
   // If session error exists, banner will be shown to allow Retry/Login
 
   // Fetch serviços
@@ -94,35 +100,33 @@ export default function NewAppointmentPage() {
     if (sessionError) return;
     setServicesError(null);
     setLoadingServices(true);
-    fetch(`/api/services?companyId=${companyId}`)
-      .then(async (res) => {
+    (async () => {
+      try {
+        const res = await fetch(`/api/services?companyId=${companyId}`);
         const body = await res.json().catch(() => null);
         if (!res.ok) {
           const msg =
             body?.error || res.statusText || "Erro ao buscar serviços";
           throw new Error(msg);
         }
-        return body ?? [];
-      })
-      .then((resData) => {
-        // API may return either a raw array or an ApiResponse with `.data`
-        const list = Array.isArray(resData)
-          ? resData
-          : Array.isArray(resData?.data)
-          ? resData.data
+        const list = Array.isArray(body)
+          ? body
+          : Array.isArray(body?.data)
+          ? body.data
           : [];
-        setServices(list);
-      })
-      .catch((err) => {
+        setServices(list as Service[]);
+      } catch (err) {
         console.error("Erro ao buscar serviços:", err);
         setServices([]);
-        const msg = String(err?.message ?? err);
+        const msg = getErrMessage(err);
         setServicesError(msg);
         try {
-          showToast.error?.(msg);
+          showToast.error?.(msg as string);
         } catch {}
-      })
-      .finally(() => setLoadingServices(false));
+      } finally {
+        setLoadingServices(false);
+      }
+    })();
   }, [companyId, sessionError, showToast]);
 
   // Fetch professionals for the company so we can attach a professionalId to the appointment
@@ -130,40 +134,38 @@ export default function NewAppointmentPage() {
     if (!companyId) return;
     setProfessionalsError(null);
     setLoadingProfessionals(true);
-    fetch(`/api/company/${companyId}/professionals`)
-      .then(async (res) => {
+    (async () => {
+      try {
+        const res = await fetch(`/api/company/${companyId}/professionals`);
         const body = await res.json().catch(() => null);
         if (!res.ok) {
           const msg =
             body?.error || res.statusText || "Erro ao buscar profissionais";
           throw new Error(msg);
         }
-        return body ?? { data: [] };
-      })
-      .then((resData) => {
-        const list = Array.isArray(resData)
-          ? resData
-          : Array.isArray(resData?.data)
-          ? resData.data
+        const list = Array.isArray(body)
+          ? body
+          : Array.isArray(body?.data)
+          ? body.data
           : [];
-        setProfessionals(list);
-        // set default professionalId if none selected
+        setProfessionals(list as { id: string; name: string }[]);
         if (list.length > 0) {
           setForm((prev) =>
             prev.professionalId ? prev : { ...prev, professionalId: list[0].id }
           );
         }
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error("Erro ao buscar profissionais:", err);
         setProfessionals([]);
-        const msg = String(err?.message ?? err);
+        const msg = getErrMessage(err);
         setProfessionalsError(msg);
         try {
-          showToast.error?.(msg);
+          showToast.error?.(msg as string);
         } catch {}
-      })
-      .finally(() => setLoadingProfessionals(false));
+      } finally {
+        setLoadingProfessionals(false);
+      }
+    })();
   }, [companyId, showToast]);
 
   // Fetch appointments e gera slots
@@ -180,31 +182,42 @@ export default function NewAppointmentPage() {
       const dateStr = formatDateLocal(selectedDate);
 
       // Horários de funcionamento
-      // the API is exposed at /api/working-hours?companyId=... (not under /api/companies/...)
       const resHours = await fetch(
         `/api/working-hours?companyId=${companyId}&date=${dateStr}`
       );
-      const resHoursJson = await resHours.json();
+      const hoursBody = await resHours.json().catch(() => null);
+      if (!resHours.ok) {
+        const msg =
+          hoursBody?.error || resHours.statusText || "Erro ao buscar horários";
+        throw new Error(msg);
+      }
       type WorkingHour = {
         dayOfWeek: number;
         openTime: string;
         closeTime: string;
       };
-      const workingHours: WorkingHour[] = Array.isArray(resHoursJson)
-        ? resHoursJson
-        : Array.isArray(resHoursJson?.data)
-        ? resHoursJson.data
+      const workingHours: WorkingHour[] = Array.isArray(hoursBody)
+        ? hoursBody
+        : Array.isArray(hoursBody?.data)
+        ? hoursBody.data
         : [];
 
       // Agendamentos existentes
       const resAppointments = await fetch(
         `/api/appointments?companyId=${companyId}&from=${dateStr}&to=${dateStr}`
       );
-      const resAppointmentsJson = await resAppointments.json();
-      const rawArray: PrismaAppointment[] = Array.isArray(resAppointmentsJson)
-        ? resAppointmentsJson
-        : Array.isArray(resAppointmentsJson?.data)
-        ? resAppointmentsJson.data
+      const apptsBody = await resAppointments.json().catch(() => null);
+      if (!resAppointments.ok) {
+        const msg =
+          apptsBody?.error ||
+          resAppointments.statusText ||
+          "Erro ao buscar agendamentos";
+        throw new Error(msg);
+      }
+      const rawArray: PrismaAppointment[] = Array.isArray(apptsBody)
+        ? apptsBody
+        : Array.isArray(apptsBody?.data)
+        ? apptsBody.data
         : [];
 
       // normalize server appointments to UI-friendly shape

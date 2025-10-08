@@ -4,13 +4,7 @@
 
 import React from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import {
-  Clock,
-  CheckCircle,
-  Check,
-  XCircle,
-  Edit as EditIcon,
-} from "lucide-react";
+import { Clock, CheckCircle, Check, Edit as EditIcon } from "lucide-react";
 import { UIAppointment } from "@/lib/appointments";
 import formatBRL from "@/lib/currency";
 

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useToast } from "@/app/components/ui/ToastErrorProvider";
 import AppointmentCard from "./AppointmentCard";
 import { UIAppointment, default as prismaToUI } from "@/lib/appointments";
-import { formatBRL } from "@/lib/currency";
+import { Appointment } from "@/generated/prisma";
 
 interface Props {
   companyId: string;
@@ -15,9 +15,6 @@ interface Props {
 export default function AppointmentsBoard({ companyId, date, onEdit }: Props) {
   const [appointments, setAppointments] = useState<UIAppointment[]>([]);
   const [columns, setColumns] = useState<Record<string, UIAppointment[]>>({});
-  const [professionalsMap, setProfessionalsMap] = useState<
-    Record<string, string>
-  >({});
   const [professionalsList, setProfessionalsList] = useState<
     { id: string; name: string }[]
   >([]);
@@ -36,11 +33,20 @@ export default function AppointmentsBoard({ companyId, date, onEdit }: Props) {
       )}&from=${date}&to=${date}`;
       if (filterProfessionalId)
         q += `&professionalId=${encodeURIComponent(filterProfessionalId)}`;
+      const readApi = async <T,>(res: Response): Promise<T[]> => {
+        const body = await res.json().catch(() => null);
+        const list = Array.isArray(body) ? body : body?.data ?? [];
+        if (!Array.isArray(list)) return [];
+        return list as T[];
+      };
+
       const res = await fetch(`/api/appointments?${q}`);
-      const body = await res.json().catch(() => null);
-      const raw = Array.isArray(body) ? body : body?.data ?? [];
-      const ui = (raw as any[])
-        .map((r) => prismaToUI(r))
+      const raw = await readApi<unknown>(res);
+      const ui = raw
+        .map((r) => {
+          if (r && typeof r === "object") return prismaToUI(r as Appointment);
+          return null;
+        })
         .filter((x): x is UIAppointment => Boolean(x));
       setAppointments(ui);
     };
@@ -52,19 +58,25 @@ export default function AppointmentsBoard({ companyId, date, onEdit }: Props) {
         const res = await fetch(
           `/api/company/${encodeURIComponent(companyId)}/professionals`
         );
-        const body = await res.json().catch(() => null);
-        const list = Array.isArray(body) ? body : body?.data ?? [];
-        const map: Record<string, string> = {};
+        const readApi = async <T,>(res: Response): Promise<T[]> => {
+          const body = await res.json().catch(() => null);
+          const list = Array.isArray(body) ? body : body?.data ?? [];
+          if (!Array.isArray(list)) return [];
+          return list as T[];
+        };
+
+        const list = await readApi<unknown>(res);
         const arr: { id: string; name: string }[] = [];
-        (list as any[]).forEach((p) => {
-          if (p && typeof p.name === "string" && typeof p.id === "string") {
-            map[p.name] = p.id;
-            arr.push({ id: p.id, name: p.name });
+        list.forEach((p) => {
+          if (p && typeof p === "object") {
+            const obj = p as Record<string, unknown>;
+            const id = typeof obj.id === "string" ? obj.id : undefined;
+            const name = typeof obj.name === "string" ? obj.name : undefined;
+            if (id && name) arr.push({ id, name });
           }
         });
-        setProfessionalsMap(map);
         setProfessionalsList(arr);
-      } catch (err) {
+      } catch {
         // ignore silently; mapping is best-effort
       }
     };
@@ -121,7 +133,7 @@ export default function AppointmentsBoard({ companyId, date, onEdit }: Props) {
       });
       if (!res.ok) throw new Error("Erro ao atualizar agendamento");
       toast.success?.("Status do agendamento atualizado");
-    } catch (err) {
+    } catch {
       toast.error?.("Erro ao atualizar status. Recarregando...");
       // rollback: refetch
       try {
@@ -132,8 +144,8 @@ export default function AppointmentsBoard({ companyId, date, onEdit }: Props) {
         );
         const body = await res.json().catch(() => null);
         const raw = Array.isArray(body) ? body : body?.data ?? [];
-        const ui = (raw as any[])
-          .map((r) => prismaToUI(r))
+        const ui = (raw as unknown[])
+          .map((r) => prismaToUI(r as Appointment))
           .filter((x): x is UIAppointment => Boolean(x));
         setAppointments(ui);
       } catch {}
@@ -181,10 +193,10 @@ export default function AppointmentsBoard({ companyId, date, onEdit }: Props) {
 
     // Use an absolutely-positioned overlay with the status color and low opacity so
     // the column is tinted but child cards remain fully opaque.
-        const overlayStyle: React.CSSProperties = {
-          backgroundColor: `var(${colorVar})`,
-          opacity: 0.06,
-          pointerEvents: "none",
+    const overlayStyle: React.CSSProperties = {
+      backgroundColor: `var(${colorVar})`,
+      opacity: 0.08,
+      pointerEvents: "none",
     };
 
     return (

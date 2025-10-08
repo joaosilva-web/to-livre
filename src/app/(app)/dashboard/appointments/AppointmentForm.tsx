@@ -79,12 +79,7 @@ export default function AppointmentForm({ appointment, onClose }: Props) {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
-  const {
-    user,
-    loading: sessionLoading,
-    error: sessionError,
-    refresh: refreshSession,
-  } = useSession();
+  const { user, error: sessionError } = useSession();
   const companyId = user?.companyId ?? null;
 
   useEffect(() => {
@@ -126,6 +121,13 @@ export default function AppointmentForm({ appointment, onClose }: Props) {
     if (sessionError) return;
     if (!companyId) return;
 
+    const readApi = async <T,>(res: Response): Promise<T[]> => {
+      const body = await res.json().catch(() => null);
+      const list = Array.isArray(body) ? body : body?.data ?? [];
+      if (!Array.isArray(list)) return [];
+      return list as T[];
+    };
+
     const fetchSlots = async () => {
       const from = formatDateLocal(selectedDate);
       const to = from;
@@ -134,7 +136,7 @@ export default function AppointmentForm({ appointment, onClose }: Props) {
           companyId
         )}&from=${from}&to=${to}`
       );
-      const data: UIAppointment[] = await res.json();
+      const data = await readApi<UIAppointment>(res);
 
       const slots: AvailableSlot[] = Array.from({ length: 10 }, (_, i) => {
         const hour = 9 + i;
@@ -161,9 +163,15 @@ export default function AppointmentForm({ appointment, onClose }: Props) {
       const url = appointment
         ? `/api/appointments/${appointment.id}`
         : "/api/appointments";
-
       // ensure we send a proper ISO instant to the server by parsing the local datetime-local value
-      const payload = { ...form } as any;
+      const payload: {
+        clientName?: string;
+        service?: string;
+        price?: number;
+        date?: string;
+        status?: AppointmentStatus;
+        companyId?: string;
+      } = { ...form };
       if (form.date) {
         payload.date = parseDateTimeLocal(String(form.date)).toISOString();
       }
@@ -171,7 +179,11 @@ export default function AppointmentForm({ appointment, onClose }: Props) {
         throw new Error("CompanyId não encontrado");
 
       // attach companyId when creating new appointment; when updating, server infers from current record
-      if (!appointment) payload.companyId = companyId;
+      if (!appointment) {
+        // companyId is possibly null; ensure we only assign a string
+        if (!companyId) throw new Error("CompanyId não encontrado");
+        payload.companyId = companyId;
+      }
 
       await fetch(url, {
         method,

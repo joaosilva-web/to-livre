@@ -4,8 +4,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import useSession from "@/hooks/useSession";
-import Filters from "./FilterProps";
-import AppointmentsList from "./AppointmentList";
+// import Filters from "./FilterProps";
+// import AppointmentsList from "./AppointmentList";
 import AppointmentsBoard from "./board/AppointmentsBoard";
 import { formatDateLocal } from "@/lib/date";
 import AppointmentForm from "./AppointmentForm";
@@ -23,12 +23,7 @@ interface FiltersState {
 export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<UIAppointment[]>([]);
   const router = useRouter();
-  const {
-    user,
-    loading: sessionLoading,
-    error: sessionError,
-    refresh: refreshSession,
-  } = useSession();
+  const { user, error: sessionError } = useSession();
   const companyId = user?.companyId ?? null;
   const [selectedAppointment, setSelectedAppointment] =
     useState<UIAppointment | null>(null);
@@ -38,6 +33,10 @@ export default function AppointmentsPage() {
     from: "",
     to: "",
   });
+  // unused handlers kept for future functionality
+  void appointments;
+  void router;
+  void setFilters;
 
   const fetchAppointments = useCallback(async () => {
     if (sessionError) return;
@@ -54,15 +53,25 @@ export default function AppointmentsPage() {
       const res = await fetch(
         `/api/appointments${query.length ? `?${query.join("&")}` : ""}`
       );
-      const body = await res.json().catch(() => null);
+
+      const readApi = async <T,>(r: Response): Promise<T[]> => {
+        const body = await r.json().catch(() => null);
+        const list = Array.isArray(body) ? body : body?.data ?? [];
+        return Array.isArray(list) ? (list as T[]) : [];
+      };
+
+      const raw = await readApi<Appointment>(res);
+
       if (!res.ok) {
-        console.error("Erro fetch appointments:", body || res.statusText);
+        console.error(
+          "Erro fetch appointments:",
+          raw.length ? raw : res.statusText
+        );
         setAppointments([]);
         return;
       }
 
-      const raw = Array.isArray(body) ? body : body?.data ?? [];
-      const ui = (raw as Appointment[])
+      const ui = raw
         .map((d) => prismaToUI(d)!)
         .filter(Boolean) as UIAppointment[];
       setAppointments(ui);
@@ -81,10 +90,7 @@ export default function AppointmentsPage() {
     if (!sessionError) return;
   }, [sessionError]);
 
-  const handleEdit = (appointment: UIAppointment) => {
-    setSelectedAppointment(appointment);
-    setShowForm(true);
-  };
+  // edit handler is provided inline to AppointmentsBoard; keep logic close to usage
 
   const handleNew = () => {
     setSelectedAppointment(null); // garante que é criação
