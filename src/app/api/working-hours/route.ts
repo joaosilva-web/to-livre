@@ -1,17 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { WorkingHours } from "@/generated/prisma";
 import { z, ZodError } from "zod";
 
 import prisma from "@/lib/prisma";
 import * as api from "@/app/libs/apiResponse";
-
-// Tipagem de retorno padrão
-interface ApiResponse<T = unknown> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  errorDetails?: { path?: string; message: string }[];
-}
 
 // Validação de WorkingHours
 const workingHoursSchema = z.object({

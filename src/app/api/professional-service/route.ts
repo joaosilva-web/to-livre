@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { z, ZodError } from "zod";
 
 import prisma from "@/lib/prisma";
@@ -15,7 +15,8 @@ export async function GET(req: NextRequest) {
   const companyId = req.nextUrl.searchParams.get("companyId");
   const professionalId = req.nextUrl.searchParams.get("professionalId");
 
-  if (!companyId && !professionalId) return api.badRequest("É necessário informar companyId ou professionalId");
+  if (!companyId && !professionalId)
+    return api.badRequest("É necessário informar companyId ou professionalId");
 
   let associations;
 

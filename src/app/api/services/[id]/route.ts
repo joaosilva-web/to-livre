@@ -1,17 +1,11 @@
 // api/services/[id]/route.ts
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { Service } from "@/generated/prisma";
 import { z, ZodError } from "zod";
 
 import prisma from "@/lib/prisma";
-
-interface ApiResponse<T = unknown> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  errorDetails?: { path: string; message: string }[];
-}
+import * as api from "@/app/libs/apiResponse";
 
 // Validação de Service
 const serviceSchema = z.object({
@@ -35,12 +29,7 @@ export async function PUT(req: NextRequest) {
     const idFromQuery = req.nextUrl.searchParams.get("id");
     const id = idFromQuery ?? idFromPath;
 
-    if (!id) {
-      return NextResponse.json<ApiResponse>(
-        { success: false, error: "id é obrigatório" },
-        { status: 400 }
-      );
-    }
+    if (!id) return api.badRequest("id é obrigatório");
 
     const body: unknown = await req.json();
     const parsed: Partial<ServiceInput> = serviceSchema.partial().parse(body);
@@ -50,31 +39,20 @@ export async function PUT(req: NextRequest) {
       data: parsed,
     });
 
-    return NextResponse.json<ApiResponse<Service>>({
-      success: true,
-      data: updated,
-    });
+    return api.ok(updated);
   } catch (err: unknown) {
     if (err instanceof ZodError) {
-      return NextResponse.json<ApiResponse>(
-        {
-          success: false,
-          error: "Erro de validação",
-          errorDetails: err.issues.map((issue) => ({
-            path: issue.path.join("."),
-            message: issue.message,
-          })),
-        },
-        { status: 400 }
+      return api.badRequest(
+        "Erro de validação",
+        err.issues.map((issue) => ({
+          path: issue.path.join("."),
+          message: issue.message,
+        }))
       );
     }
-
     const error =
       err instanceof Error ? err.message : "Erro ao atualizar serviço";
-    return NextResponse.json<ApiResponse>(
-      { success: false, error },
-      { status: 500 }
-    );
+    return api.serverError(error);
   }
 }
 
@@ -86,27 +64,13 @@ export async function DELETE(req: NextRequest) {
     const idFromQuery = req.nextUrl.searchParams.get("id");
     const id = idFromQuery ?? idFromPath;
 
-    if (!id) {
-      return NextResponse.json<ApiResponse>(
-        { success: false, error: "id é obrigatório" },
-        { status: 400 }
-      );
-    }
+    if (!id) return api.badRequest("id é obrigatório");
 
-    const deleted: Service = await prisma.service.delete({
-      where: { id },
-    });
-
-    return NextResponse.json<ApiResponse<Service>>({
-      success: true,
-      data: deleted,
-    });
+    const deleted: Service = await prisma.service.delete({ where: { id } });
+    return api.ok(deleted);
   } catch (err: unknown) {
     const error =
       err instanceof Error ? err.message : "Erro ao deletar serviço";
-    return NextResponse.json<ApiResponse>(
-      { success: false, error },
-      { status: 500 }
-    );
+    return api.serverError(error);
   }
 }
