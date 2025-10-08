@@ -1,46 +1,53 @@
 import { NextResponse } from "next/server";
 
+export type ApiEnvelope<T = unknown> = {
+  success: boolean;
+  data?: T;
+  error?: string;
+  errorDetails?: unknown;
+};
+
 export function ok<T = unknown>(data: T) {
-  return NextResponse.json({ success: true, data } as any, { status: 200 });
+  const body: ApiEnvelope<T> = { success: true, data };
+  return NextResponse.json(body, { status: 200 });
 }
 
 export function created<T = unknown>(data: T) {
-  return NextResponse.json({ success: true, data } as any, { status: 201 });
+  const body: ApiEnvelope<T> = { success: true, data };
+  return NextResponse.json(body, { status: 201 });
 }
 
-export function badRequest(message: string, errorDetails?: any) {
-  return NextResponse.json(
-    { success: false, error: message, errorDetails } as any,
-    { status: 400 }
-  );
+export function badRequest(message: string, errorDetails?: unknown) {
+  const body: ApiEnvelope = { success: false, error: message, errorDetails };
+  return NextResponse.json(body, { status: 400 });
 }
 
 export function unauthorized(message = "Unauthorized") {
-  return NextResponse.json({ success: false, error: message } as any, {
-    status: 401,
-  });
+  const body: ApiEnvelope = { success: false, error: message };
+  return NextResponse.json(body, { status: 401 });
 }
 
 export function forbidden(message = "Forbidden") {
-  return NextResponse.json({ success: false, error: message } as any, {
-    status: 403,
-  });
+  const body: ApiEnvelope = { success: false, error: message };
+  return NextResponse.json(body, { status: 403 });
 }
 
 export function conflict(message = "Conflict") {
-  return NextResponse.json({ success: false, error: message } as any, {
-    status: 409,
-  });
+  const body: ApiEnvelope = { success: false, error: message };
+  return NextResponse.json(body, { status: 409 });
 }
 
 export function tooMany(message = "Too many requests") {
-  return NextResponse.json({ success: false, error: message } as any, {
-    status: 429,
-  });
+  const body: ApiEnvelope = { success: false, error: message };
+  return NextResponse.json(body, { status: 429 });
 }
 
 export function serverError(message = "Internal server error") {
-  return NextResponse.json({ success: false, error: message } as any, {
-    status: 500,
-  });
+  const body: ApiEnvelope = { success: false, error: message };
+  return NextResponse.json(body, { status: 500 });
+}
+
+export function notFound(message = "Not found") {
+  const body: ApiEnvelope = { success: false, error: message };
+  return NextResponse.json(body, { status: 404 });
 }
