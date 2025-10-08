@@ -1,22 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { z, ZodError } from "zod";
 import prisma from "@/lib/prisma";
+import type { Prisma } from "@/generated/prisma";
 import { buildAppointmentWhere } from "@/lib/appointmentsRange";
 import * as api from "@/app/libs/apiResponse";
 import { checkRateLimit } from "@/app/libs/rateLimit";
 
-// Tipagem ApiResponse
-interface ApiResponse<T = unknown> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  errorDetails?: { path?: string; message: string }[];
-}
+// local helper error type for errors with codes (e.g. OVERLAP)
+type ErrorWithCode = Error & { code?: string };
 
-// -------------------
-// Schemas de validação
-// -------------------
-
+// Schemas
 const createAppointmentSchema = z.object({
   companyId: z.string().min(1),
   professionalId: z.string().min(1),
@@ -38,37 +31,30 @@ const updateAppointmentSchema = z.object({
   status: z.enum(["PENDING", "CONFIRMED", "COMPLETED", "CANCELED"]).optional(),
 });
 
-// -------------------
-// Helpers
-// -------------------
-
 function timeToMinutes(hhmm: string) {
   const [hh, mm] = hhmm.split(":").map(Number);
   return hh * 60 + mm;
 }
 
 function getDayOfWeekUTC(date: Date) {
-  return date.getUTCDay(); // 0..6
+  return date.getUTCDay();
 }
 
 function hashToTwoInts(key: string): [number, number] {
   let h = 5381;
   for (let i = 0; i < key.length; i++) h = (h * 33) ^ key.charCodeAt(i);
-  // convert to signed 32-bit integers to match Postgres `int` parameters
   const a = h | 0;
   const b = ~h | 0;
   return [a, b];
 }
 
-// -------------------
 // POST - criar appointment
-// -------------------
-
 export async function POST(req: NextRequest) {
   try {
-    // Rate limit by IP (best-effort using x-forwarded-for header)
     const ip =
-      req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown";
+      req.headers.get("x-forwarded-for") ||
+      req.headers.get("x-real-ip") ||
+      "unknown";
     const allowed = await checkRateLimit(ip);
     if (!allowed) return api.tooMany();
 
@@ -80,6 +66,7 @@ export async function POST(req: NextRequest) {
       where: { id: parsed.serviceId },
       select: { id: true, duration: true, companyId: true },
     });
+
     if (!service || service.companyId !== parsed.companyId)
       return api.badRequest("Serviço não encontrado ou não pertence à empresa");
 
@@ -91,7 +78,9 @@ export async function POST(req: NextRequest) {
       where: { companyId: parsed.companyId, dayOfWeek: day },
     });
     if (!wh)
-      return api.badRequest("Horário de funcionamento não configurado para esse dia");
+      return api.badRequest(
+        "Horário de funcionamento não configurado para esse dia"
+      );
 
     const startMinutes = start.getUTCHours() * 60 + start.getUTCMinutes();
     const endMinutes = end.getUTCHours() * 60 + end.getUTCMinutes();
@@ -115,10 +104,9 @@ export async function POST(req: NextRequest) {
       });
 
       if (overlapCount > 0) {
-        // throw a specific error that we'll catch and map to 409
-        const e: any = new Error(
+        const e = new Error(
           "Já existe agendamento conflitando para esse profissional nesse horário"
-        );
+        ) as ErrorWithCode;
         e.code = "OVERLAP";
         throw e;
       }
@@ -144,18 +132,15 @@ export async function POST(req: NextRequest) {
       }));
       return api.badRequest("Erro de validação", errorDetails);
     }
-    const e = err as any;
-    if (e?.code === "OVERLAP") {
-      return api.conflict(e.message);
-    }
-    return api.serverError((err as Error).message || "Erro ao criar agendamento");
+    const e = err as ErrorWithCode;
+    if (e?.code === "OVERLAP") return api.conflict(e.message);
+    return api.serverError(
+      (err as Error).message || "Erro ao criar agendamento"
+    );
   }
 }
 
-// -------------------
 // GET - listar appointments
-// -------------------
-
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = req.nextUrl;
@@ -166,14 +151,14 @@ export async function GET(req: NextRequest) {
 
     if (!companyId) return api.badRequest("companyId é obrigatório");
 
-    let where: Record<string, unknown>;
+    let where: Prisma.AppointmentWhereInput;
     if (from || to) {
-      // use single source-of-truth util to build the where clause
+      // buildAppointmentWhere returns a plain object but it matches AppointmentWhereInput shape
       where = buildAppointmentWhere(companyId, from ?? "", to ?? "");
     } else {
       where = { companyId };
     }
-    if (professionalId) where.professionalId = professionalId;
+    if (professionalId) where = { ...where, professionalId };
 
     const appointments = await prisma.appointment.findMany({
       where,
@@ -183,14 +168,13 @@ export async function GET(req: NextRequest) {
 
     return api.ok(appointments);
   } catch (err) {
-    return api.serverError((err as Error).message || "Erro ao listar agendamentos");
+    return api.serverError(
+      (err as Error).message || "Erro ao listar agendamentos"
+    );
   }
 }
 
-// -------------------
 // PUT - atualizar appointment
-// -------------------
-
 export async function PUT(req: NextRequest) {
   try {
     const body = await req.json();
@@ -200,11 +184,7 @@ export async function PUT(req: NextRequest) {
     const parsed = updateAppointmentSchema.parse(rest);
 
     const current = await prisma.appointment.findUnique({ where: { id } });
-    if (!current)
-      return NextResponse.json<ApiResponse>(
-        { success: false, error: "Agendamento não encontrado" },
-        { status: 404 }
-      );
+    if (!current) return api.notFound("Agendamento não encontrado");
 
     const start = parsed.startTime
       ? new Date(parsed.startTime)
@@ -215,15 +195,10 @@ export async function PUT(req: NextRequest) {
       where: { id: serviceId },
       select: { duration: true, companyId: true },
     });
-    if (!service)
-      return NextResponse.json<ApiResponse>(
-        { success: false, error: "Serviço inválido" },
-        { status: 400 }
-      );
+    if (!service) return api.badRequest("Serviço inválido");
 
     const end = new Date(start.getTime() + service.duration * 60_000);
 
-    // same advisory lock + overlap check as POST
     const [lock1, lock2] = hashToTwoInts(current.professionalId);
 
     const updated = await prisma.$transaction(async (tx) => {
@@ -250,34 +225,22 @@ export async function PUT(req: NextRequest) {
       });
     });
 
-    return NextResponse.json<ApiResponse>({ success: true, data: updated });
+    return api.ok(updated);
   } catch (err) {
     if (err instanceof ZodError) {
       const errorDetails = err.issues.map((i) => ({
         path: i.path.join("."),
         message: i.message,
       }));
-      return NextResponse.json<ApiResponse>(
-        { success: false, error: "Erro de validação", errorDetails },
-        { status: 400 }
-      );
+      return api.badRequest("Erro de validação", errorDetails);
     }
-    return NextResponse.json<ApiResponse>(
-      { success: false, error: (err as Error).message || "Erro ao atualizar" },
-      { status: 500 }
-    );
+    return api.serverError((err as Error).message || "Erro ao atualizar");
   }
 }
 
-// -------------------
 // DELETE - remover appointment
-// -------------------
-
 export async function DELETE(req: NextRequest) {
   try {
-    // This route is mounted at /api/appointments (not a dynamic [id] route),
-    // so Next's generated RouteContext won't include params here. Read the id
-    // from the query string or, as a fallback, from the JSON body.
     const searchId = req.nextUrl.searchParams.get("id");
     let id: string | null = searchId;
 
@@ -286,16 +249,11 @@ export async function DELETE(req: NextRequest) {
         const body = await req.json();
         id = body?.id ?? null;
       } catch {
-        // ignore JSON parse errors
         id = null;
       }
     }
 
-    if (!id)
-      return NextResponse.json<ApiResponse>(
-        { success: false, error: "id é obrigatório" },
-        { status: 400 }
-      );
+    if (!id) return api.badRequest("id é obrigatório");
 
     await prisma.appointment.delete({ where: { id } });
     return api.ok({ id });

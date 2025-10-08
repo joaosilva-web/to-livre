@@ -1,15 +1,8 @@
 // app/api/appointments/route.ts (Next.js app router style)
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { z, ZodError } from "zod";
 import prisma from "@/lib/prisma";
-
-// Tipagem ApiResponse
-interface ApiResponse<T = unknown> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  errorDetails?: { path?: string; message: string }[];
-}
+import * as api from "@/app/libs/apiResponse";
 
 // Request validation
 const createAppointmentSchema = z.object({
@@ -56,13 +49,7 @@ export async function POST(req: NextRequest) {
       select: { id: true, duration: true, companyId: true, name: true },
     });
     if (!service || service.companyId !== companyId) {
-      return NextResponse.json<ApiResponse>(
-        {
-          success: false,
-          error: "Serviço não encontrado ou não pertence à empresa",
-        },
-        { status: 400 }
-      );
+      return api.badRequest("Serviço não encontrado ou não pertence à empresa");
     }
 
     // compute endTime
@@ -73,15 +60,10 @@ export async function POST(req: NextRequest) {
     const wh = await prisma.workingHours.findFirst({
       where: { companyId, dayOfWeek: day },
     });
-    if (!wh) {
-      return NextResponse.json<ApiResponse>(
-        {
-          success: false,
-          error: "Horário de funcionamento não configurado para esse dia",
-        },
-        { status: 400 }
+    if (!wh)
+      return api.badRequest(
+        "Horário de funcionamento não configurado para esse dia"
       );
-    }
 
     // convert start/end to minutes (UTC time-of-day)
     const startMinutes = start.getUTCHours() * 60 + start.getUTCMinutes();
@@ -89,15 +71,8 @@ export async function POST(req: NextRequest) {
     const openMinutes = timeToMinutes(wh.openTime);
     const closeMinutes = timeToMinutes(wh.closeTime);
 
-    if (startMinutes < openMinutes || endMinutes > closeMinutes) {
-      return NextResponse.json<ApiResponse>(
-        {
-          success: false,
-          error: "Agendamento fora do horário de funcionamento",
-        },
-        { status: 400 }
-      );
-    }
+    if (startMinutes < openMinutes || endMinutes > closeMinutes)
+      return api.badRequest("Agendamento fora do horário de funcionamento");
 
     // Use advisory lock per professional to avoid race conditions in concurrent requests
     const [lock1, lock2] = hashToTwoInts(professionalId);
@@ -137,30 +112,17 @@ export async function POST(req: NextRequest) {
       return appt;
     });
 
-    return NextResponse.json<ApiResponse>({ success: true, data: created });
+    return api.created(created);
   } catch (err) {
     if (err instanceof ZodError) {
       const errorDetails = err.issues.map((issue) => ({
         path: issue.path.join("."),
         message: issue.message,
       }));
-      return NextResponse.json<ApiResponse>(
-        {
-          success: false,
-          error: "Erro de validação",
-          errorDetails,
-        },
-        { status: 400 }
-      );
+      return api.badRequest("Erro de validação", errorDetails);
     }
 
     const error = err as Error;
-    return NextResponse.json<ApiResponse>(
-      {
-        success: false,
-        error: error.message || "Erro ao criar agendamento",
-      },
-      { status: 500 }
-    );
+    return api.serverError(error.message || "Erro ao criar agendamento");
   }
 }

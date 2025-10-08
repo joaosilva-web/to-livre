@@ -1,7 +1,7 @@
 // app/api/appointments/by/route.ts
 
 import { getUserFromCookie } from "@/app/libs/auth";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { startOfDay, endOfDay } from "date-fns";
 
 import prisma from "@/lib/prisma";
