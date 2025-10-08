@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Input from "@/app/components/ui/Input";
 import Button from "@/app/components/ui/Button";
 import Modal from "@/app/components/ui/Modal";
@@ -17,12 +17,7 @@ interface Props {
   companyId: string;
 }
 
-interface ApiResponse<T = unknown> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  errorDetails?: { path?: string | string[]; message: string }[];
-}
+// Use runtime normalization for API responses: server may return raw arrays or { data: [...] }
 
 export default function WorkingHoursForm({ companyId }: Props) {
   const [hours, setHours] = useState<WorkingHour[]>([]);
@@ -46,19 +41,26 @@ export default function WorkingHoursForm({ companyId }: Props) {
     "Sábado",
   ];
 
-  const fetchHours = async () => {
+  const fetchHours = useCallback(async () => {
     try {
       const res = await fetch(`/api/working-hours?companyId=${companyId}`);
-      const data: ApiResponse<WorkingHour[]> = await res.json();
-      if (data.success && data.data) setHours(data.data);
+      const readApi = async <T,>(res: Response): Promise<T[]> => {
+        const body = await res.json().catch(() => null);
+        const list = Array.isArray(body) ? body : body?.data ?? [];
+        if (!Array.isArray(list)) return [];
+        return list as T[];
+      };
+
+      const data = await readApi<WorkingHour>(res);
+      setHours(data);
     } catch {
       showToast("Erro ao carregar horários", "error");
     }
-  };
+  }, [companyId, showToast]);
 
   useEffect(() => {
     fetchHours();
-  }, [companyId]);
+  }, [fetchHours]);
 
   const handleSave = async (hour?: WorkingHour) => {
     const id = hour?.id || "new";
@@ -74,18 +76,22 @@ export default function WorkingHoursForm({ companyId }: Props) {
           body: JSON.stringify(payload),
         }
       );
-      const data: ApiResponse<WorkingHour> = await res.json();
-
-      if (!data.success) {
-        if (Array.isArray(data.errorDetails)) {
-          data.errorDetails.forEach((err) => {
+      const body = await res.json().catch(() => null);
+      // body may be ApiEnvelope or an object with error fields
+      if (body && body.success === false) {
+        const details = Array.isArray(body.errorDetails)
+          ? body.errorDetails
+          : [];
+        if (details.length > 0) {
+          type ErrDetail = { path?: string | string[]; message: string };
+          details.forEach((err: ErrDetail) => {
             const path = Array.isArray(err.path)
               ? err.path.join(".")
               : err.path ?? "";
             showToast(path ? `${path}: ${err.message}` : err.message, "error");
           });
         } else {
-          showToast(data.error || "Erro ao salvar horário", "error");
+          showToast(body.error || "Erro ao salvar horário", "error");
         }
         return;
       }
@@ -112,10 +118,9 @@ export default function WorkingHoursForm({ companyId }: Props) {
       const res = await fetch(`/api/working-hours/${deleteTarget.id}`, {
         method: "DELETE",
       });
-      const data: ApiResponse = await res.json();
-
-      if (!data.success)
-        throw new Error(data.error || "Erro ao deletar horário");
+      const body = await res.json().catch(() => null);
+      if (body && body.success === false)
+        throw new Error(body.error || "Erro ao deletar horário");
 
       await fetchHours();
       showToast("Horário excluído com sucesso!", "success");

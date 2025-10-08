@@ -37,7 +37,9 @@ export default function CompanyForm({ user }: Props) {
       if (!user.companyId) return;
       const res = await fetch(`/api/company/${user.companyId}`);
       if (res.ok) {
-        const data = await res.json();
+        const body = await res.json().catch(() => null);
+        // body may be envelope or raw object
+        const data = body?.data ?? body ?? {};
         Object.keys(data).forEach((key) => {
           setValue(key as keyof CompanyFormData, data[key]);
         });
@@ -56,14 +58,25 @@ export default function CompanyForm({ user }: Props) {
         body: JSON.stringify({ ...data }),
       });
 
-      const result = await res.json();
-
+      const body = await res.json().catch(() => null);
       if (!res.ok) {
-        if (result.error && Array.isArray(result.error)) {
-          // Zod errors
-          setApiErrors(result.error.map((e: any) => e.message));
-        } else if (result.error) {
-          setApiErrors([result.error]);
+        // Handle zod-like errors inside body.error or body.errorDetails
+        if (body && Array.isArray(body.error)) {
+          type ErrItem = { message?: string } | string;
+          setApiErrors(
+            (body.error as ErrItem[]).map((e) =>
+              typeof e === "string" ? e : e?.message ?? String(e)
+            )
+          );
+        } else if (body && Array.isArray(body.errorDetails)) {
+          type ErrDetail = { message?: string };
+          setApiErrors(
+            (body.errorDetails as ErrDetail[]).map(
+              (d) => d.message ?? String(d)
+            )
+          );
+        } else if (body && body.error) {
+          setApiErrors([String(body.error)]);
         }
         setLoading(false);
         return;

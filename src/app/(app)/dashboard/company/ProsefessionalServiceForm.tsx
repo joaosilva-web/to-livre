@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import Button from "@/app/components/ui/Button";
 import { useToast } from "@/app/components/ui/ToastErrorProvider";
 
@@ -26,11 +26,16 @@ interface Props {
   companyId: string;
 }
 
-interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  errorDetails?: { path?: string; message: string }[];
+import type { ApiEnvelope } from "@/app/libs/apiResponse";
+
+// Guard/helper: normalize fetch responses to ApiEnvelope<T> when possible
+async function readApi<T>(res: Response): Promise<ApiEnvelope<T>> {
+  const json = await res.json().catch(() => null);
+  // If API already returns the envelope
+  if (json && typeof json === "object" && "success" in json)
+    return json as ApiEnvelope<T>;
+  // If API returned raw data (e.g., array), wrap it
+  return { success: true, data: json as T };
 }
 
 export default function ProfessionalServiceForm({ companyId }: Props) {
@@ -56,10 +61,10 @@ export default function ProfessionalServiceForm({ companyId }: Props) {
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch dados
-  const fetchProfessionals = async () => {
+  const fetchProfessionals = useCallback(async () => {
     try {
       const res = await fetch(`/api/company/${companyId}/professionals`);
-      const data: ApiResponse<Professional[]> = await res.json();
+      const data = await readApi<Professional[]>(res);
       if (data.success && data.data) setProfessionals(data.data);
     } catch (err) {
       toast(
@@ -67,26 +72,26 @@ export default function ProfessionalServiceForm({ companyId }: Props) {
         "error"
       );
     }
-  };
+  }, [companyId, toast]);
 
-  const fetchServices = async () => {
+  const fetchServices = useCallback(async () => {
     try {
       const res = await fetch(`/api/services?companyId=${companyId}`);
-      const data: ApiResponse<Service[]> = await res.json();
+      const data = await readApi<Service[]>(res);
       if (data.success && data.data) setServices(data.data);
     } catch (err) {
       toast((err as Error).message || "Erro ao carregar serviços", "error");
     }
-  };
+  }, [companyId, toast]);
 
-  const fetchAssociations = async () => {
+  const fetchAssociations = useCallback(async () => {
     try {
       const url = filterProfessionalId
         ? `/api/professional-service?professionalId=${filterProfessionalId}`
         : `/api/professional-service?companyId=${companyId}`; // <- usa companyId quando não tiver filtro
 
       const res = await fetch(url);
-      const data: ApiResponse<ProfessionalService[]> = await res.json();
+      const data = await readApi<ProfessionalService[]>(res);
 
       if (data.success && data.data) {
         setAssociations(data.data);
@@ -95,13 +100,13 @@ export default function ProfessionalServiceForm({ companyId }: Props) {
     } catch (err) {
       toast((err as Error).message || "Erro ao carregar associações", "error");
     }
-  };
+  }, [companyId, filterProfessionalId, toast]);
 
   useEffect(() => {
     fetchProfessionals();
     fetchServices();
     fetchAssociations();
-  }, [companyId, filterProfessionalId]);
+  }, [fetchProfessionals, fetchServices, fetchAssociations]);
 
   // Debounce na pesquisa
   useEffect(() => {
@@ -137,7 +142,7 @@ export default function ProfessionalServiceForm({ companyId }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newAssoc),
       });
-      const data: ApiResponse<ProfessionalService> = await res.json();
+      const data = await readApi<ProfessionalService>(res);
 
       if (!data.success) {
         if (Array.isArray(data.errorDetails)) {
@@ -166,7 +171,7 @@ export default function ProfessionalServiceForm({ companyId }: Props) {
       const res = await fetch(`/api/professional-service/${id}`, {
         method: "DELETE",
       });
-      const data: ApiResponse<void> = await res.json();
+      const data = await readApi<void>(res);
       if (!data.success)
         throw new Error(data.error || "Erro ao deletar associação");
 

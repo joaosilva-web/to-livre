@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Input from "@/app/components/ui/Input";
 import Button from "@/app/components/ui/Button";
 import { useToast } from "@/app/components/ui/ToastErrorProvider";
@@ -17,11 +17,13 @@ interface Props {
   companyId: string;
 }
 
-interface ApiResponse<T = unknown> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  errorDetails?: { path?: string | string[]; message: string }[];
+import type { ApiEnvelope } from "@/app/libs/apiResponse";
+
+async function readApi<T>(res: Response): Promise<ApiEnvelope<T>> {
+  const json = await res.json().catch(() => null);
+  if (json && typeof json === "object" && "success" in json)
+    return json as ApiEnvelope<T>;
+  return { success: true, data: json as T };
 }
 
 export default function ServicesForm({ companyId }: Props) {
@@ -37,21 +39,19 @@ export default function ServicesForm({ companyId }: Props) {
 
   const showToast = useToast();
 
-  const fetchServices = async () => {
+  const fetchServices = useCallback(async () => {
     try {
       const res = await fetch(`/api/services?companyId=${companyId}`);
-      const data: ApiResponse<Service[]> = await res.json();
-      if (data.success && data.data) {
-        setServices(data.data);
-      }
+      const data = await readApi<Service[]>(res);
+      if (data.success && data.data) setServices(data.data);
     } catch {
       showToast("Erro ao carregar serviços", "error");
     }
-  };
+  }, [companyId, showToast]);
 
   useEffect(() => {
     fetchServices();
-  }, [companyId]);
+  }, [fetchServices]);
 
   const handleSave = async (service?: Service) => {
     const id = service?.id || "new";
@@ -68,7 +68,7 @@ export default function ServicesForm({ companyId }: Props) {
         }
       );
 
-      const data: ApiResponse<Service> = await res.json();
+      const data = await readApi<Service>(res);
       if (!data.success) {
         if (Array.isArray(data.errorDetails)) {
           data.errorDetails.forEach((err) => {
@@ -104,11 +104,9 @@ export default function ServicesForm({ companyId }: Props) {
     setDeletingId(id);
     try {
       const res = await fetch(`/api/services/${id}`, { method: "DELETE" });
-      const data: ApiResponse = await res.json();
-
-      if (!data.success) {
+      const data = await readApi<void>(res);
+      if (!data.success)
         throw new Error(data.error || "Erro ao deletar serviço");
-      }
 
       await fetchServices();
       showToast("Serviço excluído com sucesso!", "success");
