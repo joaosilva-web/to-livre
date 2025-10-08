@@ -82,8 +82,13 @@ export default function AuthPage() {
       });
 
       if (!res.ok) {
-        const error = await res.json();
-        setErrorMessage(error.message || "Erro ao cadastrar.");
+        const body = await res.json().catch(() => null);
+        const msg =
+          body?.message ||
+          body?.error ||
+          res.statusText ||
+          "Erro ao cadastrar.";
+        setErrorMessage(msg);
         return;
       }
 

@@ -62,8 +62,13 @@ export default function LeadsPage() {
       });
 
       if (!res.ok) {
-        const error = await res.json();
-        setErrorMessage(error.error);
+        const body = await res.json().catch(() => null);
+        const msg =
+          body?.error ||
+          body?.message ||
+          res.statusText ||
+          "Erro ao enviar lead";
+        setErrorMessage(msg);
         setResponseIsOk(false);
         return;
       }
