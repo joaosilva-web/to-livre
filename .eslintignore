@@ -1,0 +1,8 @@
+# Ignore generated Prisma client and declaration files
+src/generated/**
+
+# Ignore local type declaration shims
+src/types/**
+
+# Optional: ignore wasm/runtime generated bundles
+src/generated/prisma/runtime/**

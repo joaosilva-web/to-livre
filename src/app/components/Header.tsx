@@ -11,13 +11,7 @@ import useSession from "@/hooks/useSession";
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
-  const [userName, setUserName] = useState<string | null>(null);
   const { user } = useSession();
-
-  // reflect session user into local simple state for display
-  useEffect(() => {
-    if (user?.name) setUserName(user.name);
-  }, [user]);
 
   const navItems = [
     { label: "Como funciona", href: "/#how" },
@@ -34,7 +28,8 @@ export default function Header() {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
       window.location.href = "/";
-    } catch (e) {
+    } catch {
+      // ignore and redirect
       window.location.href = "/";
     }
   }

@@ -3,21 +3,23 @@ declare module "@dnd-kit/core" {
 
   export const DndContext: React.ComponentType<{
     children?: React.ReactNode;
-    onDragEnd?: (event: any) => void;
-    onDragStart?: (event: any) => void;
-    onDragOver?: (event: any) => void;
-    onDragCancel?: (event: any) => void;
+    // Use unknown for event payloads from the library and let consumers narrow as needed
+    onDragEnd?: (event: unknown) => void;
+    onDragStart?: (event: unknown) => void;
+    onDragOver?: (event: unknown) => void;
+    onDragCancel?: (event: unknown) => void;
   }>;
 
-  export function useDraggable(options: any): {
-    attributes: any;
-    listeners: any;
+  export function useDraggable(options: Record<string, unknown> | undefined): {
+    // attributes and listeners are implementation-specific objects - expose as generic maps
+    attributes: Record<string, unknown>;
+    listeners: Record<string, unknown>;
     setNodeRef: (el: HTMLElement | null) => void;
     transform?: { x: number; y: number } | null;
     isDragging?: boolean;
   };
 
-  export function useDroppable(options: any): {
+  export function useDroppable(options: Record<string, unknown> | undefined): {
     setNodeRef: (el: HTMLElement | null) => void;
     isOver?: boolean;
   };

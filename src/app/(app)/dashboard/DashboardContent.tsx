@@ -19,25 +19,16 @@ import {
 } from "recharts";
 import formatBRL from "@/lib/currency";
 
-interface User {
-  name?: string;
-}
-
-interface Props {
-  user: User | null;
-}
-
 const COLORS = ["#1AC897", "#8884d8", "#FF8042", "#82ca9d", "#FFBB28"];
 
-export default function DashboardContent({ user }: Props) {
-  // Mock de dados
+export default function DashboardContent() {
   const appointmentsData = useMemo(
     () => [
-      { day: "Seg", agendados: 5, concluídos: 4 },
-      { day: "Ter", agendados: 8, concluídos: 6 },
-      { day: "Qua", agendados: 4, concluídos: 3 },
-      { day: "Qui", agendados: 7, concluídos: 7 },
-      { day: "Sex", agendados: 10, concluídos: 9 },
+      { day: "Seg", agendados: 5, concluidos: 4 },
+      { day: "Ter", agendados: 8, concluidos: 6 },
+      { day: "Qua", agendados: 4, concluidos: 3 },
+      { day: "Qui", agendados: 7, concluidos: 7 },
+      { day: "Sex", agendados: 10, concluidos: 9 },
     ],
     []
   );
@@ -121,7 +112,7 @@ export default function DashboardContent({ user }: Props) {
               <Tooltip />
               <Legend />
               <Bar dataKey="agendados" fill="#8884d8" />
-              <Bar dataKey="concluídos" fill="#1AC897" />
+              <Bar dataKey="concluidos" fill="#1AC897" />
             </BarChart>
           </ResponsiveContainer>
         </div>
