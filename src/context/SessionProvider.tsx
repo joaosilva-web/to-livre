@@ -41,10 +41,48 @@ async function fetchUserOnce(): Promise<UserShape | null> {
         globalCachedUser = null;
         return null;
       }
-      globalCachedUser = body?.user ?? null;
+
+      // The API may return several shapes while migrating:
+      // - { user: { ... } }
+      // - { data: { user: { ... } } }
+      // - { data: { ...user fields... } }
+      // - { ...user fields... }
+      const normalizeUserCandidate = (b: unknown) => {
+        if (!b || typeof b !== "object") return null;
+        const obj = b as Record<string, unknown>;
+        // prefer explicit user
+        if (obj.user && typeof obj.user === "object")
+          return obj.user as Record<string, unknown>;
+        // data.user
+        if (obj.data && typeof obj.data === "object") {
+          const d = obj.data as Record<string, unknown>;
+          if (d.user && typeof d.user === "object")
+            return d.user as Record<string, unknown>;
+          // if data itself looks like the user fields, return data
+          return d;
+        }
+        // fallback: maybe body is the user object
+        return obj;
+      };
+
+      const userCandidate = normalizeUserCandidate(body);
+      if (userCandidate && typeof userCandidate === "object") {
+        const u = userCandidate as Record<string, unknown>;
+        globalCachedUser = {
+          id: typeof u.id === "string" ? u.id : undefined,
+          name: typeof u.name === "string" ? u.name : undefined,
+          email: typeof u.email === "string" ? u.email : undefined,
+          companyId: typeof u.companyId === "string" ? u.companyId : undefined,
+          roles: Array.isArray(u.roles)
+            ? (u.roles.filter((r) => typeof r === "string") as string[])
+            : undefined,
+        };
+      } else {
+        globalCachedUser = null;
+      }
       return globalCachedUser;
     })
-    .catch((err) => {
+    .catch(() => {
       globalCachedUser = null;
       return null;
     })
@@ -97,10 +135,9 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({
         setUser(u);
         if (!u) setError("Não autenticado");
       })
-      .catch((err) => {
+      .catch(() => {
         if (!mounted) return;
-        console.error(err);
-        setError(String(err ?? "Erro ao buscar sessão"));
+        setError("Erro ao buscar sessão");
         setUser(null);
       })
       .finally(() => {

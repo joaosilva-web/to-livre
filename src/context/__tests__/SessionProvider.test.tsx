@@ -18,7 +18,6 @@ describe("SessionProvider internals", () => {
       email: "t@test.com",
       roles: ["admin"],
     };
-    // @ts-ignore
     global.fetch = vi
       .fn()
       .mockResolvedValue({ ok: true, json: async () => ({ user: fakeUser }) });
@@ -28,13 +27,10 @@ describe("SessionProvider internals", () => {
   });
 
   it("returns null when whoami returns not ok", async () => {
-    // @ts-ignore
-    global.fetch = vi
-      .fn()
-      .mockResolvedValue({
-        ok: false,
-        json: async () => ({ error: "unauth" }),
-      });
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      json: async () => ({ error: "unauth" }),
+    });
 
     const res = await fetchUserOnce();
     expect(res).toBeNull();
