@@ -1,5 +1,5 @@
 // app/api/company/route.ts
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { Company } from "@/generated/prisma";
 import { getUserFromCookie, JWTPayload } from "@/app/libs/auth";
 import { z, ZodError } from "zod";
@@ -29,20 +29,26 @@ export async function POST(req: NextRequest) {
     const data: CompanyInput = companySchema.parse(body); // valida o body
 
     const company: Company = await prisma.company.create({
-      data: {
-        ...data,
-        users: { connect: { id: user.id } },
-      },
+      data: { ...data, users: { connect: { id: user.id } } },
     });
 
     // Vincula o usuário à empresa
-    await prisma.user.update({ where: { id: user.id }, data: { companyId: company.id } });
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { companyId: company.id },
+    });
 
     return api.created(company);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(error);
     if (error instanceof ZodError) {
-      return api.badRequest("Erro de validação", error.errors);
+      return api.badRequest(
+        "Erro de validação",
+        error.errors.map((e) => ({
+          path: e.path.join("."),
+          message: e.message,
+        }))
+      );
     }
     return api.serverError("Erro ao criar empresa");
   }
@@ -63,10 +69,16 @@ export async function PUT(req: NextRequest) {
     });
 
     return api.ok(company);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(error);
     if (error instanceof ZodError) {
-      return api.badRequest("Erro de validação", error.errors);
+      return api.badRequest(
+        "Erro de validação",
+        error.errors.map((e) => ({
+          path: e.path.join("."),
+          message: e.message,
+        }))
+      );
     }
     return api.serverError("Erro ao atualizar empresa");
   }

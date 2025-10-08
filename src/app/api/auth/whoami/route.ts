@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { getUserFromCookie } from "@/app/libs/auth";
 import * as api from "@/app/libs/apiResponse";
 

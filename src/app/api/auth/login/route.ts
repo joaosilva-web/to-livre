@@ -1,5 +1,5 @@
 // app/api/auth/login/route.ts
-import { NextResponse } from "next/server";
+// NextResponse is not directly used here; `api.ok` returns a NextResponse when needed
 import { PrismaClient } from "@/generated/prisma";
 import { compare } from "bcrypt";
 import { signToken } from "@/app/libs/auth";

@@ -25,7 +25,7 @@ export async function POST(req: Request) {
   // If recaptcha is configured, verify token
   if (recaptchaToken) {
     const ok = await verifyRecaptcha(recaptchaToken);
-      if (!ok) return api.badRequest("reCAPTCHA failed");
+    if (!ok) return api.badRequest("reCAPTCHA failed");
   }
 
   const exists = await prisma.user.findUnique({ where: { email } });

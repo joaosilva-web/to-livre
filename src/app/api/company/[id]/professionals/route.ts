@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
 import prisma from "@/lib/prisma";
 import * as api from "@/app/libs/apiResponse";
@@ -25,6 +25,8 @@ export async function GET(req: NextRequest) {
 
     return api.ok(users);
   } catch (err) {
-    return api.serverError((err as Error).message || "Erro ao buscar profissionais");
+    return api.serverError(
+      (err as Error).message || "Erro ao buscar profissionais"
+    );
   }
 }

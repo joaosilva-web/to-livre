@@ -1,5 +1,5 @@
 // app/api/company/[id]/route.ts
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { Company } from "@/generated/prisma";
 import { getUserFromCookie, JWTPayload } from "@/app/libs/auth";
 
@@ -10,9 +10,10 @@ interface CompanyParams {
   id: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function GET(req: NextRequest, context: any) {
-  const { params } = context as { params: CompanyParams };
+export async function GET(req: NextRequest, context: unknown) {
+  const { params } = (context as { params: CompanyParams } | undefined) ?? {
+    params: {} as CompanyParams,
+  };
   const user: JWTPayload | null = await getUserFromCookie();
   if (!user) return api.unauthorized();
 

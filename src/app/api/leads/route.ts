@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { NextResponse } from "next/server";
 
 import { verifyRecaptcha } from "../../libs/verifyRecaptcha";
 import { checkRateLimit } from "../../libs/rateLimit";
