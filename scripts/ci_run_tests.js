@@ -5,4 +5,4 @@ const env = Object.assign({}, process.env, {
 });
 
 console.log('Running vitest with DATABASE_URL=', env.DATABASE_URL);
-execSync('npx vitest --run --coverage', { stdio: 'inherit', env });
+execSync('npx vitest --run', { stdio: 'inherit', env });
