@@ -28,5 +28,5 @@ export default async function DashboardPage() {
   }
 
   // Caso tenha empresa, renderiza o dashboard
-  return <DashboardContent user={user} />;
+  return <DashboardContent />;
 }
