@@ -11,7 +11,7 @@
     "lint": "next lint",
     "ci:test:db:up": "docker compose -f docker-compose.test.yml up -d",
     "ci:test:db:down": "docker compose -f docker-compose.test.yml down -v",
-    "ci:test:migrate": "DATABASE_URL=postgresql://test:test@127.0.0.1:5433/to_livre_test?schema=public npx prisma migrate deploy",
+    "ci:test:migrate": "node scripts/ci_migrate_test.js",
     "ci:test": "npm run ci:test:db:up && npm run ci:test:migrate && vitest --run --coverage --threads=1 && npm run ci:test:db:down"
   },
   "test": "vitest",
