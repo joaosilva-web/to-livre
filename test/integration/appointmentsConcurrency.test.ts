@@ -1,5 +1,5 @@
-import { beforeAll, afterAll, beforeEach, describe, it, expect } from 'vitest';
-import { PrismaClient } from '@/generated/prisma';
+import { beforeAll, afterAll, beforeEach, describe, it, expect } from "vitest";
+import { PrismaClient } from "@/generated/prisma";
 
 const prisma = new PrismaClient();
 
@@ -30,18 +30,18 @@ beforeEach(async () => {
   await prisma.company.deleteMany();
 });
 
-describe('appointments concurrency (advisory lock)', () => {
-  it('serializes concurrent create attempts so only one succeeds', async () => {
+describe("appointments concurrency (advisory lock)", () => {
+  it("serializes concurrent create attempts so only one succeeds", async () => {
     // create minimal data: company, professional, service, working hours
     const company = await prisma.company.create({
-      data: { nomeFantasia: 'ACME', cnpjCpf: `cnpj-${Date.now()}` },
+      data: { nomeFantasia: "ACME", cnpjCpf: `cnpj-${Date.now()}` },
     });
 
     const professional = await prisma.user.create({
       data: {
-        name: 'Prof',
+        name: "Prof",
         email: `prof-${Date.now()}@example.com`,
-        password: 'x',
+        password: "x",
         companyId: company.id,
       },
     });
@@ -49,7 +49,7 @@ describe('appointments concurrency (advisory lock)', () => {
     const service = await prisma.service.create({
       data: {
         companyId: company.id,
-        name: 'Consult',
+        name: "Consult",
         price: 100,
         duration: 60,
       },
@@ -62,8 +62,8 @@ describe('appointments concurrency (advisory lock)', () => {
       data: {
         companyId: company.id,
         dayOfWeek: day,
-        openTime: '00:00',
-        closeTime: '23:59',
+        openTime: "00:00",
+        closeTime: "23:59",
       },
     });
 
@@ -81,13 +81,16 @@ describe('appointments concurrency (advisory lock)', () => {
         const overlapCount = await tx.appointment.count({
           where: {
             professionalId: professional.id,
-            AND: [{ startTime: { lt: endTime } }, { endTime: { gt: startTime } }],
+            AND: [
+              { startTime: { lt: endTime } },
+              { endTime: { gt: startTime } },
+            ],
           },
         });
 
         if (overlapCount > 0) {
-          const e = new Error('OVERLAP') as Error & { code?: string };
-          e.code = 'OVERLAP';
+          const e = new Error("OVERLAP") as Error & { code?: string };
+          e.code = "OVERLAP";
           throw e;
         }
 
@@ -95,7 +98,7 @@ describe('appointments concurrency (advisory lock)', () => {
           data: {
             companyId: company.id,
             professionalId: professional.id,
-            clientName: 'Client',
+            clientName: "Client",
             serviceId: service.id,
             startTime,
             endTime,
@@ -106,8 +109,8 @@ describe('appointments concurrency (advisory lock)', () => {
     // run two attempts in parallel
     const results = await Promise.allSettled([attempt(), attempt()]);
 
-    const fulfilled = results.filter((r) => r.status === 'fulfilled');
-    const rejected = results.filter((r) => r.status === 'rejected');
+    const fulfilled = results.filter((r) => r.status === "fulfilled");
+    const rejected = results.filter((r) => r.status === "rejected");
 
     expect(fulfilled.length).toBe(1);
     expect(rejected.length).toBe(1);
