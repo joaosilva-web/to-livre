@@ -145,7 +145,6 @@ export default function ServicesForm({ companyId }: Props) {
               placeholder="Nome do serviço"
             />
             <Input
-              type="number"
               value={service.price}
               onChange={(e) =>
                 setServices((prev) =>
@@ -159,7 +158,6 @@ export default function ServicesForm({ companyId }: Props) {
               placeholder="Preço"
             />
             <Input
-              type="number"
               value={service.duration}
               onChange={(e) =>
                 setServices((prev) =>

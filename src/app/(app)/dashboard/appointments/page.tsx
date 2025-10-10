@@ -92,11 +92,6 @@ export default function AppointmentsPage() {
 
   // edit handler is provided inline to AppointmentsBoard; keep logic close to usage
 
-  const handleNew = () => {
-    setSelectedAppointment(null); // garante que é criação
-    setShowForm(true);
-  };
-
   const handleFormClose = () => {
     setSelectedAppointment(null);
     setShowForm(false);
@@ -107,7 +102,7 @@ export default function AppointmentsPage() {
     <div className="p-4">
       <div className="flex justify-between items-center mb-4 bg-background p-4 rounded-lg shadow-sm">
         <h1 className="text-2xl font-bold text-text">Agendamentos</h1>
-        <Button size="sm" onClick={handleNew}>
+        <Button size="sm" asLink href="/dashboard/appointments/new">
           Novo Agendamento
         </Button>
       </div>

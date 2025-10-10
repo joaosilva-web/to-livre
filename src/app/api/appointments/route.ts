@@ -5,6 +5,7 @@ import type { Prisma } from "@/generated/prisma";
 import { buildAppointmentWhere } from "@/lib/appointmentsRange";
 import * as api from "@/app/libs/apiResponse";
 import { checkRateLimit } from "@/app/libs/rateLimit";
+import { getUserFromCookie } from "@/app/libs/auth";
 
 // local helper error type for errors with codes (e.g. OVERLAP)
 type ErrorWithCode = Error & { code?: string };
@@ -55,7 +56,10 @@ export async function POST(req: NextRequest) {
       req.headers.get("x-forwarded-for") ||
       req.headers.get("x-real-ip") ||
       "unknown";
-    const allowed = await checkRateLimit(ip);
+
+    // If the request comes from an authenticated user, skip rate limiting
+    const user = await getUserFromCookie();
+    const allowed = await checkRateLimit(ip, { userId: user?.id ?? null });
     if (!allowed) return api.tooMany();
 
     const body = await req.json();
