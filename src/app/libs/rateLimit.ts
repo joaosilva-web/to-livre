@@ -9,7 +9,10 @@ export interface CheckRateLimitOpts {
   userId?: string | null;
 }
 
-export async function checkRateLimit(ip: string, opts?: CheckRateLimitOpts): Promise<boolean> {
+export async function checkRateLimit(
+  ip: string,
+  opts?: CheckRateLimitOpts
+): Promise<boolean> {
   // If caller explicitly provided a userId (i.e. authenticated request), skip rate limiting
   if (opts?.userId) return true;
 

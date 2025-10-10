@@ -4,6 +4,7 @@ import { z, ZodError } from "zod";
 
 import prisma from "@/lib/prisma";
 import * as api from "@/app/libs/apiResponse";
+import { getUserFromCookie } from "@/app/libs/auth";
 
 // Validação de Service
 const serviceSchema = z.object({
@@ -44,6 +45,13 @@ export async function POST(req: NextRequest) {
   try {
     const body: unknown = await req.json();
     const parsed: ServiceInput = serviceSchema.parse(body);
+
+    const user = await getUserFromCookie();
+    if (!user) return api.unauthorized();
+
+    // only allow creating service for user's company
+    if (user.companyId !== parsed.companyId)
+      return api.forbidden("Você não pode criar serviços para esta empresa");
 
     const created: Service = await prisma.service.create({ data: parsed });
     return api.created(created);

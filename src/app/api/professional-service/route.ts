@@ -3,6 +3,7 @@ import { z, ZodError } from "zod";
 
 import prisma from "@/lib/prisma";
 import * as api from "@/app/libs/apiResponse";
+import { getUserFromCookie } from "@/app/libs/auth";
 
 // Validação de associação profissional-serviço
 const professionalServiceSchema = z.object({
@@ -52,6 +53,15 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const parsed = professionalServiceSchema.parse(body);
+
+    const user = await getUserFromCookie();
+    if (!user) return api.unauthorized();
+
+    // Ensure service belongs to user's company
+    const service = await prisma.service.findUnique({ where: { id: parsed.serviceId } });
+    if (!service) return api.notFound("Serviço não encontrado");
+    if (user.companyId && service.companyId !== user.companyId)
+      return api.forbidden("Você não pode associar serviços de outra empresa");
 
     const created = await prisma.professionalService.create({ data: parsed });
 

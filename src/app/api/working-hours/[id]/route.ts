@@ -4,6 +4,7 @@ import { WorkingHours } from "@/generated/prisma";
 import { z, ZodError } from "zod";
 import prisma from "@/lib/prisma";
 import * as api from "@/app/libs/apiResponse";
+import { getUserFromCookie } from "@/app/libs/auth";
 
 // Schema para validação de atualização (parcial)
 const workingHoursUpdateSchema = z.object({
@@ -42,6 +43,14 @@ export async function PUT(req: NextRequest) {
       return api.badRequest("openTime deve ser menor que closeTime");
     }
 
+    const user = await getUserFromCookie();
+    if (!user) return api.unauthorized();
+
+    const existing = await prisma.workingHours.findUnique({ where: { id } });
+    if (!existing) return api.notFound("Horário não encontrado");
+    if (user.companyId && existing.companyId !== user.companyId)
+      return api.forbidden("Você não pode editar este horário");
+
     const updated: WorkingHours = await prisma.workingHours.update({
       where: { id },
       data: parsed,
@@ -71,6 +80,14 @@ export async function DELETE(req: NextRequest) {
     const id = idFromQuery ?? idFromPath;
 
     if (!id) return api.badRequest("id é obrigatório");
+
+    const user = await getUserFromCookie();
+    if (!user) return api.unauthorized();
+
+    const existing = await prisma.workingHours.findUnique({ where: { id } });
+    if (!existing) return api.notFound("Horário não encontrado");
+    if (user.companyId && existing.companyId !== user.companyId)
+      return api.forbidden("Você não pode deletar este horário");
 
     const deleted: WorkingHours = await prisma.workingHours.delete({
       where: { id },

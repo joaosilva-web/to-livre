@@ -6,6 +6,7 @@ import { z, ZodError } from "zod";
 
 import prisma from "@/lib/prisma";
 import * as api from "@/app/libs/apiResponse";
+import { getUserFromCookie } from "@/app/libs/auth";
 
 // Validação de Service
 const serviceSchema = z.object({
@@ -33,6 +34,15 @@ export async function PUT(req: NextRequest) {
 
     const body: unknown = await req.json();
     const parsed: Partial<ServiceInput> = serviceSchema.partial().parse(body);
+
+    const user = await getUserFromCookie();
+    if (!user) return api.unauthorized();
+
+    // Ensure the service belongs to user's company (if user has company)
+    const existing = await prisma.service.findUnique({ where: { id } });
+    if (!existing) return api.notFound("Serviço não encontrado");
+    if (user.companyId && existing.companyId !== user.companyId)
+      return api.forbidden("Você não pode editar este serviço");
 
     const updated: Service = await prisma.service.update({
       where: { id },
@@ -65,6 +75,14 @@ export async function DELETE(req: NextRequest) {
     const id = idFromQuery ?? idFromPath;
 
     if (!id) return api.badRequest("id é obrigatório");
+
+    const user = await getUserFromCookie();
+    if (!user) return api.unauthorized();
+
+    const existing = await prisma.service.findUnique({ where: { id } });
+    if (!existing) return api.notFound("Serviço não encontrado");
+    if (user.companyId && existing.companyId !== user.companyId)
+      return api.forbidden("Você não pode deletar este serviço");
 
     const deleted: Service = await prisma.service.delete({ where: { id } });
     return api.ok(deleted);

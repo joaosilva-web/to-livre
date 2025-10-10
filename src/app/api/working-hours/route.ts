@@ -4,6 +4,7 @@ import { z, ZodError } from "zod";
 
 import prisma from "@/lib/prisma";
 import * as api from "@/app/libs/apiResponse";
+import { getUserFromCookie } from "@/app/libs/auth";
 
 // Validação de WorkingHours
 const workingHoursSchema = z.object({
@@ -42,6 +43,12 @@ export async function POST(req: NextRequest) {
     if (parsed.openTime >= parsed.closeTime) {
       return api.badRequest("openTime deve ser menor que closeTime");
     }
+
+    const user = await getUserFromCookie();
+    if (!user) return api.unauthorized();
+
+    if (user.companyId && user.companyId !== parsed.companyId)
+      return api.forbidden("Você não pode criar horários para esta empresa");
 
     const created: WorkingHours = await prisma.workingHours.create({
       data: parsed,

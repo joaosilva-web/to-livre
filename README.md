@@ -168,3 +168,29 @@ O projeto lida com datas e horários seguindo regras para evitar ambiguidades en
 Uma interface Swagger UI está disponível em `/swagger.html` e consome a especificação em `/api/docs`.
 
 Exemplo local: http://localhost:3000/swagger.html
+
+---
+
+## 🔬 Como rodar testes de integração localmente
+
+Se você quer rodar os testes de integração e E2E que usam PostgreSQL, siga este fluxo (PowerShell/Windows):
+
+```powershell
+# 1) Subir banco de teste (usa o docker-compose.test.yml)
+docker compose -f docker-compose.test.yml up -d
+
+# 2) Exportar a variável de ambiente para os testes (exemplo):
+$env:DATABASE_URL = "postgresql://test:test@127.0.0.1:5433/to_livre_test?schema=public"
+
+# 3) Rodar migrations no banco de teste
+npx prisma migrate deploy
+
+# 4) Rodar a suíte de testes (integração + unit)
+npx vitest --run
+
+# 5) Para subir a aplicação localmente apontando para esse DB (opcional):
+$env:POSTGRES_URL = $env:DATABASE_URL
+npm run dev
+```
+
+Observação: os testes de integração dependem do Docker e do serviço Postgres estar disponível na porta mapeada (5433 no docker-compose.test.yml). Se o Docker não estiver rodando, os testes que usam Prisma falharão ao conectar.
