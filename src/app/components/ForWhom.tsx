@@ -73,7 +73,7 @@ export default function ForWhom() {
           {...(cta.isVisible ? bounceIn(0) : bounceOut)}
           className="mt-8"
         >
-          <Button asLink href="/leads">
+          <Button asLink href="/auth">
             Comece a usar gratuitamente
           </Button>
         </motion.div>

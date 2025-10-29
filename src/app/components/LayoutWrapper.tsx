@@ -10,8 +10,10 @@ export default function LayoutWrapper({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const hideFooter = pathname !== "/leads" || "/dashboard";
-  const hideHeader = pathname == "/auth" || "/dashboard";
+  // show header on public pages, hide on auth and dashboard routes
+  const hideHeader = pathname === "/auth" || pathname.startsWith("/dashboard");
+  // show footer on most public pages; hide on dashboard and auth
+  const hideFooter = pathname === "/auth" || pathname.startsWith("/dashboard");
 
   return (
     <>

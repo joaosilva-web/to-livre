@@ -41,7 +41,7 @@ export default function Hero() {
               {...(cta.isVisible ? bounceIn(0) : bounceOut)}
               className="flex flex-col sm:flex-row sm:items-center gap-4 mt-2"
             >
-              <Button asLink href="/leads">
+              <Button asLink href="/auth">
                 Comece grátis
               </Button>
             </motion.div>
@@ -50,7 +50,7 @@ export default function Hero() {
               {...(cta.isVisible ? bounceIn(0) : bounceOut)}
               className="flex flex-col sm:flex-row sm:items-center gap-4 mt-2"
             >
-              <Button asLink href="/leads" variant="outlined">
+              <Button asLink href="/auth" variant="outlined">
                 Veja como funciona
               </Button>
             </motion.div>

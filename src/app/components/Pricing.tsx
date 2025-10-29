@@ -119,7 +119,7 @@ export default function Pricing() {
           ref={ctaFim.ref}
           {...(ctaFim.isVisible ? bounceIn(0) : bounceOut)}
         >
-          <Button asLink href="/leads" mt="xlg">
+          <Button asLink href="/auth" mt="xlg">
             Quero começar de graça
           </Button>
         </motion.div>

@@ -77,7 +77,7 @@ export default function HowItWorks() {
           {...(cta.isVisible ? bounceIn(0) : bounceOut)}
           className="mt-16"
         >
-          <Button asLink href="/leads" mt="sm">
+          <Button asLink href="/auth" mt="sm">
             Quero experimentar de graça
           </Button>
         </motion.div>

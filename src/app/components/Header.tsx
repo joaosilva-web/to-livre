@@ -13,10 +13,10 @@ export default function Header() {
   const [user, setUser] = useState<{ id: string; name: string } | null>(null);
 
   const navItems = [
-    { label: "Como funciona", href: "/#how" },
-    { label: "Para quem é", href: "/#who" },
-    { label: "Dúvidas", href: "/#faq" },
-    { label: "Entrar", href: "/leads" },
+  { label: "Como funciona", href: "/#how" },
+  { label: "Para quem é", href: "/#who" },
+  { label: "Dúvidas", href: "/#faq" },
+  { label: "Entrar", href: "/auth" },
   ];
 
   useEffect(() => {
@@ -28,7 +28,7 @@ export default function Header() {
         const data = await res.json();
         if (mounted && data?.user)
           setUser({ id: data.user.id, name: data.user.name });
-      } catch (e) {
+      } catch {
         // ignore
       }
     })();
@@ -42,7 +42,7 @@ export default function Header() {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
       window.location.href = "/";
-    } catch (e) {
+    } catch {
       window.location.href = "/";
     }
   }
@@ -74,7 +74,7 @@ export default function Header() {
                 {label}
               </a>
             ))}
-            <Button asLink href="/leads" size="sm">
+            <Button asLink href="/auth" size="sm">
               Comece grátis
             </Button>
             {user ? (
@@ -126,7 +126,7 @@ export default function Header() {
                 </a>
               ))}
               <Link
-                href="/leads"
+                href="/auth"
                 onClick={() => setIsOpen(false)}
                 className="bg-primary text-white px-4 py-2 rounded-xl text-center hover:bg-primary-hover transition"
               >
